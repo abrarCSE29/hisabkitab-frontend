@@ -1,0 +1,9 @@
+@import "tailwindcss";
+
+/* Horizontal chip rows scroll without a visible scrollbar */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
