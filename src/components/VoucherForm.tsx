@@ -37,7 +37,9 @@ export default function VoucherForm({ initial, submitLabel, onSubmit }: VoucherF
   const [imageUrl, setImageUrl] = useState<string | null>(initial?.image_url ?? null);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const fileInput = useRef<HTMLInputElement>(null);
+  const [photoMenuOpen, setPhotoMenuOpen] = useState(false);
+  const cameraInput = useRef<HTMLInputElement>(null);
+  const galleryInput = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (categories.length === 0) {
@@ -130,48 +132,58 @@ export default function VoucherForm({ initial, submitLabel, onSubmit }: VoucherF
         ))}
       </div>
 
-      {/* HERO: amount + item name — the two things that matter most */}
-      <section className="flex flex-col items-center gap-2">
-        <div className="flex w-full items-center justify-center gap-1 px-4">
-          <span
-            className={`shrink-0 text-3xl font-semibold ${
-              expense ? "text-red-300" : "text-emerald-300"
-            }`}
-          >
-            ৳
-          </span>
+      {items.length === 1 ? (
+        /* HERO: single quick entry — amount + item name are the stage */
+        <section className="flex flex-col items-center gap-2">
+          <div className="flex w-full items-center justify-center gap-1 px-4">
+            <span
+              className={`shrink-0 text-3xl font-semibold ${
+                expense ? "text-red-300" : "text-emerald-300"
+              }`}
+            >
+              ৳
+            </span>
+            <input
+              type="number"
+              inputMode="decimal"
+              min="0"
+              step="any"
+              autoFocus={!initial}
+              placeholder="0"
+              value={items[0]?.amount ?? ""}
+              onChange={(e) => updateItem(0, { amount: e.target.value })}
+              className={`min-w-0 flex-1 bg-transparent text-center text-6xl font-extrabold tracking-tight outline-none placeholder:text-stone-200 ${
+                expense ? "text-red-600 caret-red-400" : "text-emerald-600 caret-emerald-400"
+              } ${plainNumberInput}`}
+            />
+            {/* mirror the ৳ width so the digits stay visually centered */}
+            <span className="w-[1ch] shrink-0 text-3xl font-semibold text-transparent">৳</span>
+          </div>
           <input
-            type="number"
-            inputMode="decimal"
-            min="0"
-            step="any"
-            autoFocus={!initial}
-            placeholder="0"
-            value={items[0]?.amount ?? ""}
-            onChange={(e) => updateItem(0, { amount: e.target.value })}
-            className={`min-w-0 flex-1 bg-transparent text-center text-6xl font-extrabold tracking-tight outline-none placeholder:text-stone-200 ${
-              expense ? "text-red-600 caret-red-400" : "text-emerald-600 caret-emerald-400"
-            } ${plainNumberInput}`}
+            placeholder="কীসের জন্য? (optional)"
+            value={items[0]?.name ?? ""}
+            onChange={(e) => updateItem(0, { name: e.target.value })}
+            className="h-10 w-64 rounded-full bg-white px-4 text-center text-sm text-stone-700 outline-none ring-1 ring-stone-200 placeholder:text-stone-400 focus:ring-teal-400"
           />
-          {/* mirror the ৳ width so the digits stay visually centered */}
-          <span className="w-[1ch] shrink-0 text-3xl font-semibold text-transparent">৳</span>
-        </div>
-        <input
-          placeholder="কীসের জন্য? (optional)"
-          value={items[0]?.name ?? ""}
-          onChange={(e) => updateItem(0, { name: e.target.value })}
-          className="h-10 w-64 rounded-full bg-white px-4 text-center text-sm text-stone-700 outline-none ring-1 ring-stone-200 placeholder:text-stone-400 focus:ring-teal-400"
-        />
-      </section>
-
-      {/* Extra item rows — tucked away until needed */}
-      <section className="flex flex-col gap-2">
-        {items.slice(1).map((row, sliceIndex) => {
-          const index = sliceIndex + 1;
-          return (
+        </section>
+      ) : (
+        /* LIST: multiple items — the big view collapses into uniform rows */
+        <section className="flex flex-col gap-2">
+          <div className="flex items-baseline justify-between px-1">
+            <span className="text-sm font-semibold text-stone-600">
+              Items ({items.length})
+            </span>
+            <span
+              className={`text-lg font-bold ${expense ? "text-red-600" : "text-emerald-600"}`}
+            >
+              ৳{total.toLocaleString()}
+            </span>
+          </div>
+          {items.map((row, index) => (
             <div key={index} className="flex items-center gap-2">
               <input
                 placeholder={`Item ${index + 1}`}
+                autoFocus={index === items.length - 1 && row.name === "" && row.amount === ""}
                 value={row.name}
                 onChange={(e) => updateItem(index, { name: e.target.value })}
                 className="h-11 min-w-0 flex-1 rounded-xl border border-stone-200 bg-white px-3.5 text-sm"
@@ -194,15 +206,16 @@ export default function VoucherForm({ initial, submitLabel, onSubmit }: VoucherF
                 ✕
               </button>
             </div>
-          );
-        })}
-        <button
-          onClick={() => setItems((rows) => [...rows, { name: "", amount: "" }])}
-          className="mx-auto rounded-full bg-white px-4 py-1.5 text-sm font-medium text-teal-700 ring-1 ring-stone-200 active:bg-stone-50"
-        >
-          ＋ আরো item যোগ করুন
-        </button>
-      </section>
+          ))}
+        </section>
+      )}
+
+      <button
+        onClick={() => setItems((rows) => [...rows, { name: "", amount: "" }])}
+        className="mx-auto rounded-full bg-white px-4 py-1.5 text-sm font-medium text-teal-700 ring-1 ring-stone-200 active:bg-stone-50"
+      >
+        ＋ আরো item যোগ করুন
+      </button>
 
       {/* Category — one swipeable row, emoji-first */}
       <section className="flex flex-col gap-2">
@@ -231,8 +244,10 @@ export default function VoucherForm({ initial, submitLabel, onSubmit }: VoucherF
       <section className="flex items-center gap-2">
         {supabase && (
           <>
+            {/* Camera capture and gallery upload need separate inputs:
+                `capture` forces the camera, omitting it opens the picker. */}
             <input
-              ref={fileInput}
+              ref={cameraInput}
               type="file"
               accept="image/*"
               capture="environment"
@@ -240,10 +255,22 @@ export default function VoucherForm({ initial, submitLabel, onSubmit }: VoucherF
               onChange={(e) => {
                 const file = e.target.files?.[0];
                 if (file) void attachReceipt(file);
+                e.target.value = "";
+              }}
+            />
+            <input
+              ref={galleryInput}
+              type="file"
+              accept="image/*"
+              hidden
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) void attachReceipt(file);
+                e.target.value = "";
               }}
             />
             <button
-              onClick={() => fileInput.current?.click()}
+              onClick={() => setPhotoMenuOpen(true)}
               disabled={busy !== null}
               className="h-11 flex-1 rounded-xl bg-white text-sm font-medium ring-1 ring-stone-200 active:bg-stone-100 disabled:opacity-50"
             >
@@ -271,6 +298,50 @@ export default function VoucherForm({ initial, submitLabel, onSubmit }: VoucherF
       </section>
 
       {error && <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>}
+
+      {/* Photo source chooser — small action sheet */}
+      <div
+        onClick={() => setPhotoMenuOpen(false)}
+        aria-hidden
+        className={`fixed inset-0 z-30 bg-black/40 backdrop-blur-[2px] transition-opacity duration-300 ${
+          photoMenuOpen ? "opacity-100" : "pointer-events-none opacity-0"
+        }`}
+      />
+      <div
+        role="dialog"
+        aria-label="Add receipt photo"
+        className={`fixed inset-x-0 bottom-0 z-40 mx-auto w-full max-w-md rounded-t-3xl bg-white p-4 pb-6 shadow-2xl transition-transform duration-300 ease-out ${
+          photoMenuOpen ? "translate-y-0" : "translate-y-full"
+        }`}
+      >
+        <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-stone-200" />
+        <div className="flex flex-col gap-2">
+          <button
+            onClick={() => {
+              setPhotoMenuOpen(false);
+              cameraInput.current?.click();
+            }}
+            className="flex h-13 items-center gap-3 rounded-xl bg-stone-50 px-4 py-3.5 text-sm font-semibold active:bg-stone-100"
+          >
+            <span className="text-xl">📷</span> Take photo
+          </button>
+          <button
+            onClick={() => {
+              setPhotoMenuOpen(false);
+              galleryInput.current?.click();
+            }}
+            className="flex h-13 items-center gap-3 rounded-xl bg-stone-50 px-4 py-3.5 text-sm font-semibold active:bg-stone-100"
+          >
+            <span className="text-xl">🖼️</span> Upload from gallery
+          </button>
+          <button
+            onClick={() => setPhotoMenuOpen(false)}
+            className="h-11 rounded-xl text-sm font-medium text-stone-500 active:bg-stone-50"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
 
       {/* Sticky save — always in the thumb zone */}
       <div className="fixed inset-x-0 bottom-0 z-20 mx-auto w-full max-w-md bg-gradient-to-t from-stone-50 via-stone-50/95 to-transparent px-4 pb-5 pt-8">
