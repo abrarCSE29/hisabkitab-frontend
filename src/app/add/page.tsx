@@ -66,7 +66,7 @@ function Composer() {
         />
       </div>
 
-      <SuccessModal open={saved} title="Entry added" message="Taking you to your entries…" />
+      <SuccessModal open={saved} title="Entry added" message="" />
     </div>
   );
 }

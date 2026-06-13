@@ -193,7 +193,7 @@ function VoucherDetail() {
         </div>
       )}
 
-      <SuccessModal open={updated} title="Entry updated" message="Taking you to your entries…" />
+      <SuccessModal open={updated} title="Entry updated" message="" />
     </div>
   );
 }

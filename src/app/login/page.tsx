@@ -22,7 +22,6 @@ export default function LoginPage() {
   const [devToken, setDevToken] = useState("");
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [error, setError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
   const [emailSent, setEmailSent] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -30,24 +29,9 @@ export default function LoginPage() {
     if (accessToken) router.replace("/dashboard");
   }, [accessToken, router]);
 
-  // Surface messages handed back by the auth callback routes (?confirmed / ?error),
-  // then strip them from the URL so they don't linger on refresh.
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const confirmed = params.get("confirmed");
-    const err = params.get("error");
-    if (!confirmed && !err) return;
-    // One-shot read of the redirect query on mount — not a render loop.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (confirmed) setNotice("Email confirmed! Sign in with your email and password.");
-    else setError(err);
-    window.history.replaceState(null, "", window.location.pathname);
-  }, []);
-
   async function run(action: () => Promise<void>) {
     setBusy(true);
     setError(null);
-    setNotice(null);
     try {
       await action();
     } catch (err) {
@@ -82,8 +66,8 @@ export default function LoginPage() {
           password,
           options: {
             data: { full_name: name.trim() },
-            // Confirmation link returns here; /auth/confirm then sends them to sign in.
-            emailRedirectTo: `${window.location.origin}/auth/confirm`,
+            // Confirmation link returns here; /auth/callback signs them straight in.
+            emailRedirectTo: `${window.location.origin}/auth/callback`,
           },
         });
         if (error) throw error;
@@ -116,7 +100,6 @@ export default function LoginPage() {
                   onClick={() => {
                     setMode(m);
                     setError(null);
-                    setNotice(null);
                     setConfirmPassword("");
                     setShowPassword(false);
                   }}
@@ -131,9 +114,6 @@ export default function LoginPage() {
 
             {error && (
               <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>
-            )}
-            {notice && (
-              <p className="rounded-xl bg-teal-50 px-4 py-3 text-sm text-teal-700">{notice}</p>
             )}
 
             <button
@@ -302,7 +282,7 @@ export default function LoginPage() {
           <p className="text-sm leading-relaxed text-stone-600">
             We&apos;ve sent a confirmation link to{" "}
             <span className="font-semibold text-stone-900">{emailSent}</span>. Tap it to confirm
-            your account, then come back here to sign in.
+            your account.
           </p>
           <button
             onClick={() => {
