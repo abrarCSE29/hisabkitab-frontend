@@ -4,9 +4,33 @@ import "./globals.css";
 
 const geist = Geist({ subsets: ["latin"] });
 
+// Absolute base for OG/Twitter image URLs. Set NEXT_PUBLIC_SITE_URL to your
+// production domain; otherwise it falls back to Vercel's deploy URL, then local.
+const SITE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL ??
+  (process.env.VERCEL_PROJECT_PRODUCTION_URL
+    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+    : "http://localhost:3000");
+
+const DESCRIPTION = "Track your family's daily expenses together — built for Dhaka households.";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: "HisabKitab (হিসাবকিতাব)",
-  description: "Family expense tracker for Dhaka households",
+  description: DESCRIPTION,
+  applicationName: "HisabKitab",
+  openGraph: {
+    title: "HisabKitab (হিসাবকিতাব)",
+    description: DESCRIPTION,
+    siteName: "HisabKitab",
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "HisabKitab (হিসাবকিতাব)",
+    description: DESCRIPTION,
+  },
 };
 
 export const viewport: Viewport = {
