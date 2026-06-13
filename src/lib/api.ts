@@ -70,6 +70,8 @@ export const api = {
   updateVoucher: (id: string, payload: VoucherUpdatePayload) =>
     request<Voucher>(`/vouchers/${id}`, { method: "PUT", body: payload }),
 
+  deleteVoucher: (id: string) => request<null>(`/vouchers/${id}`, { method: "DELETE" }),
+
   ocr: (imageUrl: string) =>
     request<OcrResult>("/vouchers/ocr", { method: "POST", body: { image_url: imageUrl } }),
 

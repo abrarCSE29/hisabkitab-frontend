@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { Trash2 } from "lucide-react";
 import { categoryColor, categoryEmoji } from "@/lib/categoryMeta";
 import AppBar, { BackButton } from "@/components/AppBar";
 import AuthGate from "@/components/AuthGate";
@@ -80,6 +81,8 @@ function VoucherDetail() {
   const setCategories = useAppStore((s) => s.setCategories);
   const [voucher, setVoucher] = useState<Voucher | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     api
@@ -94,12 +97,37 @@ function VoucherDetail() {
 
   const isOwner = voucher !== null && voucher.user_id === user?.id;
 
+  async function handleDelete() {
+    if (!voucher) return;
+    setDeleting(true);
+    setError(null);
+    try {
+      await api.deleteVoucher(voucher._id);
+      router.push("/dashboard");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Delete failed");
+      setDeleting(false);
+      setConfirmDelete(false);
+    }
+  }
+
   return (
     <div className="min-h-dvh">
       <AppBar
         title={isOwner ? "Edit entry" : "Entry details"}
         subtitle={voucher?.updated_at ? `edited ${voucherDate(voucher.updated_at)}` : undefined}
         leading={<BackButton />}
+        trailing={
+          isOwner ? (
+            <button
+              onClick={() => setConfirmDelete(true)}
+              aria-label="Delete entry"
+              className="mr-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white active:bg-white/20"
+            >
+              <Trash2 className="h-5 w-5" strokeWidth={2.25} />
+            </button>
+          ) : undefined
+        }
       />
 
       <div className="flex flex-col gap-5 px-4 pb-24 pt-5">
@@ -115,7 +143,7 @@ function VoucherDetail() {
           (isOwner ? (
             <VoucherForm
               initial={voucher}
-              submitLabel="Save changes"
+              submitLabel="Update"
               onSubmit={async (payload) => {
                 await api.updateVoucher(voucher._id, payload);
                 router.push("/dashboard");
@@ -125,6 +153,42 @@ function VoucherDetail() {
             <ReadOnlyVoucher voucher={voucher} />
           ))}
       </div>
+
+      {/* Delete confirmation */}
+      {confirmDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
+          <button
+            aria-label="Cancel"
+            onClick={() => !deleting && setConfirmDelete(false)}
+            className="absolute inset-0 cursor-default bg-stone-900/50 backdrop-blur-[1px]"
+          />
+          <div className="relative w-full max-w-xs rounded-2xl bg-white p-5 shadow-2xl">
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-red-50 text-red-600">
+              <Trash2 className="h-6 w-6" strokeWidth={2} />
+            </div>
+            <p className="text-center text-base font-bold text-stone-900">Delete this entry?</p>
+            <p className="mt-1 text-center text-sm text-stone-500">
+              This can&apos;t be undone.
+            </p>
+            <div className="mt-5 flex gap-2.5">
+              <button
+                onClick={() => setConfirmDelete(false)}
+                disabled={deleting}
+                className="h-11 flex-1 rounded-xl bg-stone-100 text-sm font-semibold text-stone-700 active:bg-stone-200 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => void handleDelete()}
+                disabled={deleting}
+                className="h-11 flex-1 rounded-xl bg-red-500 text-sm font-bold text-white shadow-md shadow-red-500/25 active:bg-red-600 disabled:opacity-50"
+              >
+                {deleting ? "Deleting…" : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
