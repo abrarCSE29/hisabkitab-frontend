@@ -147,7 +147,7 @@ export default function VoucherForm({ initial, submitLabel, onSubmit }: VoucherF
       {ocrDone && (
         <div className="flex items-center justify-between gap-2 rounded-xl bg-amber-50 px-3.5 py-2.5 ring-1 ring-amber-100">
           {ocrRating ? (
-            <p className="text-sm font-medium text-amber-800">Thanks for the feedback 🙏</p>
+            <p className="text-sm font-medium text-amber-800">Thanks for the feedback</p>
           ) : (
             <>
               <p className="text-sm font-medium text-amber-800">Did the auto-fill look right?</p>
