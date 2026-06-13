@@ -75,6 +75,12 @@ export const api = {
   ocr: (imageUrl: string) =>
     request<OcrResult>("/vouchers/ocr", { method: "POST", body: { image_url: imageUrl } }),
 
+  ocrFeedback: (rating: "up" | "down", imageUrl: string | null, itemCount: number) =>
+    request<null>("/vouchers/ocr/feedback", {
+      method: "POST",
+      body: { rating, image_url: imageUrl, item_count: itemCount },
+    }),
+
   families: () => request<Family[]>("/family"),
 
   createFamily: (name: string) =>

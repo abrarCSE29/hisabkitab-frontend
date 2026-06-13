@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Camera, ImagePlus, Plus, Sparkles, X } from "lucide-react";
+import { Camera, ImagePlus, Plus, Sparkles, ThumbsDown, ThumbsUp, X } from "lucide-react";
 import { api } from "@/lib/api";
 import { categoryColor, categoryEmoji } from "@/lib/categoryMeta";
 import { uploadReceipt } from "@/lib/receipts";
@@ -39,6 +39,9 @@ export default function VoucherForm({ initial, submitLabel, onSubmit }: VoucherF
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [photoMenuOpen, setPhotoMenuOpen] = useState(false);
+  // OCR feedback: shown once an auto-fill completes; `ocrRating` records the choice.
+  const [ocrDone, setOcrDone] = useState(false);
+  const [ocrRating, setOcrRating] = useState<"up" | "down" | null>(null);
   const cameraInput = useRef<HTMLInputElement>(null);
   const galleryInput = useRef<HTMLInputElement>(null);
 
@@ -81,12 +84,19 @@ export default function VoucherForm({ initial, submitLabel, onSubmit }: VoucherF
         setError("No items found on the receipt");
       } else {
         setItems(result.items.map((i) => ({ name: i.name, amount: String(i.amount) })));
+        setOcrRating(null);
+        setOcrDone(true);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "OCR failed");
     } finally {
       setBusy(null);
     }
+  }
+
+  function submitOcrFeedback(rating: "up" | "down") {
+    setOcrRating(rating); // optimistic; the rating itself isn't critical to the user
+    void api.ocrFeedback(rating, imageUrl, parsedItems.length).catch(() => {});
   }
 
   async function save() {
@@ -132,6 +142,37 @@ export default function VoucherForm({ initial, submitLabel, onSubmit }: VoucherF
           </button>
         ))}
       </div>
+
+      {/* OCR feedback — sits above the items so it's seen right after auto-fill */}
+      {ocrDone && (
+        <div className="flex items-center justify-between gap-2 rounded-xl bg-amber-50 px-3.5 py-2.5 ring-1 ring-amber-100">
+          {ocrRating ? (
+            <p className="text-sm font-medium text-amber-800">Thanks for the feedback 🙏</p>
+          ) : (
+            <>
+              <p className="text-sm font-medium text-amber-800">Did the auto-fill look right?</p>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => submitOcrFeedback("up")}
+                  aria-label="Auto-fill was accurate"
+                  className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-emerald-600 ring-1 ring-amber-200 active:bg-emerald-50"
+                >
+                  <ThumbsUp className="h-[18px] w-[18px]" strokeWidth={2} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => submitOcrFeedback("down")}
+                  aria-label="Auto-fill was inaccurate"
+                  className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-red-500 ring-1 ring-amber-200 active:bg-red-50"
+                >
+                  <ThumbsDown className="h-[18px] w-[18px]" strokeWidth={2} />
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
 
       {items.length === 1 ? (
         /* HERO: single quick entry — amount + item name are the stage */
