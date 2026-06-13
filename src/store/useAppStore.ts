@@ -20,6 +20,12 @@ interface AppState {
   workspace: Workspace;
   setWorkspace: (workspace: Workspace) => void;
 
+  // True once persisted state has been read back from localStorage. Pages must
+  // wait for this before acting on `workspace`, otherwise the first paint shows
+  // the default (solo) and an entry can be filed against the wrong workspace.
+  hasHydrated: boolean;
+  setHasHydrated: (value: boolean) => void;
+
   // Caches to avoid redundant round-trips while navigating
   categories: Category[];
   setCategories: (categories: Category[]) => void;
@@ -51,6 +57,9 @@ export const useAppStore = create<AppState>()(
       // Member filters don't carry meaning across workspaces — reset on switch.
       setWorkspace: (workspace) => set({ workspace, vouchers: [], filters: EMPTY_FILTERS }),
 
+      hasHydrated: false,
+      setHasHydrated: (hasHydrated) => set({ hasHydrated }),
+
       categories: [],
       setCategories: (categories) => set({ categories }),
       families: [],
@@ -67,6 +76,10 @@ export const useAppStore = create<AppState>()(
     {
       name: "hisabkitab-workspace",
       partialize: (state) => ({ workspace: state.workspace }),
+      onRehydrateStorage: () => (state) => {
+        // Fires after localStorage has been read back (or attempted).
+        state?.setHasHydrated(true);
+      },
     },
   ),
 );

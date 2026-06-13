@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { UsersRound } from "lucide-react";
+import { UserRound, UsersRound } from "lucide-react";
 import AppBar, { BackButton } from "@/components/AppBar";
 import AuthGate from "@/components/AuthGate";
 import VoucherForm from "@/components/VoucherForm";
@@ -28,6 +28,28 @@ function Composer() {
       />
 
       <div className="px-4 pt-5">
+        {/* Always show where this entry will be filed, so it can never land in
+            the wrong workspace silently. */}
+        <div
+          className={`mb-4 flex items-center gap-2.5 rounded-xl px-3.5 py-2.5 text-sm font-medium ${
+            workspace.mode === "family"
+              ? "bg-teal-50 text-teal-800"
+              : "bg-stone-100 text-stone-700"
+          }`}
+        >
+          {workspace.mode === "family" ? (
+            <UsersRound className="h-4 w-4 shrink-0" strokeWidth={2} />
+          ) : (
+            <UserRound className="h-4 w-4 shrink-0" strokeWidth={2} />
+          )}
+          <span className="min-w-0">
+            Saving to{" "}
+            <span className="font-bold">
+              {workspace.mode === "family" ? workspace.familyName : "Personal"}
+            </span>
+          </span>
+        </div>
+
         <VoucherForm
           submitLabel="Save"
           onSubmit={async (payload) => {
