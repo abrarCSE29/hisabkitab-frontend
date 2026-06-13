@@ -9,6 +9,7 @@ import BottomNav from "@/components/BottomNav";
 import FilterSheet from "@/components/FilterSheet";
 import SideDrawer from "@/components/SideDrawer";
 import VoucherFeed from "@/components/VoucherFeed";
+import VoucherFeedSkeleton from "@/components/VoucherFeedSkeleton";
 import WorkspaceSwitcher from "@/components/WorkspaceSwitcher";
 import { api } from "@/lib/api";
 import { applyVoucherFilters, countActiveFilters } from "@/lib/filters";
@@ -301,7 +302,7 @@ function Dashboard() {
 
           <div className="min-h-0 flex-1 overflow-hidden px-3 py-2">
             {loading ? (
-              <div className="animate-pulse p-8 text-center text-sm text-stone-400">Loading…</div>
+              <VoucherFeedSkeleton />
             ) : (
               <VoucherFeed vouchers={visibleVouchers} />
             )}
