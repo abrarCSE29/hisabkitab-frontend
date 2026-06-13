@@ -9,8 +9,12 @@ export async function processReceiptImage(file: File): Promise<File | Blob> {
   }
 
   const options = {
-    maxSizeMB: 0.15, // Keep files under 150KB for rapid upload
-    maxWidthOrHeight: 1024,
+    // Receipts have small, dense text the OCR model must read. Keep the full
+    // original resolution (alwaysKeepResolution) and only trim bytes via JPEG
+    // quality, so line items stay legible. The 1024px/150KB cap blurred them.
+    maxSizeMB: 2,
+    initialQuality: 0.85,
+    alwaysKeepResolution: true,
     useWebWorker: true,
   };
 
