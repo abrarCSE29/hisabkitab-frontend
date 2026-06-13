@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, MailCheck } from "lucide-react";
 import Modal from "@/components/Modal";
-import { loginWithDevToken } from "@/lib/auth";
+import { initAuth, loginWithDevToken } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { useAppStore } from "@/store/useAppStore";
 
@@ -24,6 +24,15 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [emailSent, setEmailSent] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  // Register the Supabase auth listener (and resolve any existing session) here
+  // too — not just in AuthGate. The login page is public, so when a user opens
+  // it directly (no private route visited first), AuthGate never mounts and the
+  // listener is never registered, leaving signInWithPassword with nothing to
+  // push the new session into the store. That's the "login does nothing" bug.
+  useEffect(() => {
+    void initAuth();
+  }, []);
 
   useEffect(() => {
     if (accessToken) router.replace("/dashboard");

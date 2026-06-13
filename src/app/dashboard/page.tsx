@@ -76,8 +76,11 @@ function Dashboard() {
   }, [workspace, setCategories, setFamilies, setVouchers, setWorkspace]);
 
   useEffect(() => {
-    // Async data fetch — state updates happen after await, not synchronously.
+    // Runs on mount and whenever the workspace changes (refresh is rebuilt then),
+    // so show the loading skeleton for switches too — not just the first load.
+    // The manual refresh button calls refresh() directly and stays subtle.
     // eslint-disable-next-line react-hooks/set-state-in-effect
+    setLoading(true);
     void refresh();
   }, [refresh]);
 
