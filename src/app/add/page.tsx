@@ -1,9 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { UserRound, UsersRound } from "lucide-react";
 import AppBar, { BackButton } from "@/components/AppBar";
 import AuthGate from "@/components/AuthGate";
+import SuccessModal from "@/components/SuccessModal";
 import VoucherForm from "@/components/VoucherForm";
 import { api } from "@/lib/api";
 import { useAppStore } from "@/store/useAppStore";
@@ -11,6 +13,7 @@ import { useAppStore } from "@/store/useAppStore";
 function Composer() {
   const router = useRouter();
   const workspace = useAppStore((s) => s.workspace);
+  const [saved, setSaved] = useState(false);
 
   return (
     <div className="min-h-dvh">
@@ -57,10 +60,13 @@ function Composer() {
               ...payload,
               family_id: workspace.mode === "family" ? workspace.familyId : null,
             });
-            router.push("/dashboard");
+            setSaved(true);
+            setTimeout(() => router.push("/dashboard"), 1200);
           }}
         />
       </div>
+
+      <SuccessModal open={saved} title="Entry added" message="Taking you to your entries…" />
     </div>
   );
 }

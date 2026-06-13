@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, MailCheck } from "lucide-react";
+import Modal from "@/components/Modal";
 import { loginWithDevToken } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { useAppStore } from "@/store/useAppStore";
@@ -22,6 +23,7 @@ export default function LoginPage() {
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [emailSent, setEmailSent] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -85,7 +87,7 @@ export default function LoginPage() {
           },
         });
         if (error) throw error;
-        setNotice("Check your inbox and tap the confirmation link, then sign in here.");
+        setEmailSent(email);
       }
     });
 
@@ -283,6 +285,36 @@ export default function LoginPage() {
       </div>
 
       <p className="mt-6 text-center text-xs text-white/70">Made for families in Dhaka 🇧🇩</p>
+
+      {/* Confirmation-email-sent popup */}
+      <Modal
+        open={emailSent !== null}
+        onClose={() => {
+          setEmailSent(null);
+          setMode("signin");
+        }}
+        title="Check your inbox"
+      >
+        <div className="flex flex-col items-center gap-3 px-1 py-1 text-center">
+          <span className="flex h-14 w-14 items-center justify-center rounded-full bg-teal-50 text-teal-600">
+            <MailCheck className="h-7 w-7" strokeWidth={2} />
+          </span>
+          <p className="text-sm leading-relaxed text-stone-600">
+            We&apos;ve sent a confirmation link to{" "}
+            <span className="font-semibold text-stone-900">{emailSent}</span>. Tap it to confirm
+            your account, then come back here to sign in.
+          </p>
+          <button
+            onClick={() => {
+              setEmailSent(null);
+              setMode("signin");
+            }}
+            className="mt-2 h-12 w-full rounded-xl bg-gradient-to-r from-teal-600 to-emerald-500 text-sm font-bold text-white shadow-md shadow-teal-600/25 active:from-teal-700 active:to-emerald-600"
+          >
+            Got it
+          </button>
+        </div>
+      </Modal>
     </main>
   );
 }

@@ -6,6 +6,7 @@ import { Trash2 } from "lucide-react";
 import { categoryColor, categoryEmoji } from "@/lib/categoryMeta";
 import AppBar, { BackButton } from "@/components/AppBar";
 import AuthGate from "@/components/AuthGate";
+import SuccessModal from "@/components/SuccessModal";
 import VoucherForm from "@/components/VoucherForm";
 import { api } from "@/lib/api";
 import { taka, voucherDate } from "@/lib/format";
@@ -83,6 +84,7 @@ function VoucherDetail() {
   const [error, setError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [updated, setUpdated] = useState(false);
 
   useEffect(() => {
     api
@@ -146,7 +148,8 @@ function VoucherDetail() {
               submitLabel="Update"
               onSubmit={async (payload) => {
                 await api.updateVoucher(voucher._id, payload);
-                router.push("/dashboard");
+                setUpdated(true);
+                setTimeout(() => router.push("/dashboard"), 1200);
               }}
             />
           ) : (
@@ -189,6 +192,8 @@ function VoucherDetail() {
           </div>
         </div>
       )}
+
+      <SuccessModal open={updated} title="Entry updated" message="Taking you to your entries…" />
     </div>
   );
 }
