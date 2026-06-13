@@ -64,11 +64,14 @@ export default function LoginPage() {
         const { error } = await supabase!.auth.signUp({
           email,
           password,
-          options: { data: { full_name: name.trim() } },
+          options: {
+            data: { full_name: name.trim() },
+            // Return the confirmation link to the live app's callback route.
+            emailRedirectTo: `${window.location.origin}/auth/callback`,
+          },
         });
         if (error) throw error;
-        setNotice("Check your inbox to confirm your email, then sign in.");
-        setMode("signin");
+        setNotice("Check your inbox and tap the confirmation link to finish signing up.");
       }
     });
 
