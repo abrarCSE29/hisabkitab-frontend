@@ -28,6 +28,20 @@ export default function LoginPage() {
     if (accessToken) router.replace("/dashboard");
   }, [accessToken, router]);
 
+  // Surface messages handed back by the auth callback routes (?confirmed / ?error),
+  // then strip them from the URL so they don't linger on refresh.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const confirmed = params.get("confirmed");
+    const err = params.get("error");
+    if (!confirmed && !err) return;
+    // One-shot read of the redirect query on mount — not a render loop.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (confirmed) setNotice("Email confirmed! Sign in with your email and password.");
+    else setError(err);
+    window.history.replaceState(null, "", window.location.pathname);
+  }, []);
+
   async function run(action: () => Promise<void>) {
     setBusy(true);
     setError(null);
@@ -45,7 +59,7 @@ export default function LoginPage() {
     run(async () => {
       const { error } = await supabase!.auth.signInWithOAuth({
         provider: "google",
-        options: { redirectTo: window.location.origin },
+        options: { redirectTo: `${window.location.origin}/auth/callback` },
       });
       if (error) throw error;
     });
@@ -66,12 +80,12 @@ export default function LoginPage() {
           password,
           options: {
             data: { full_name: name.trim() },
-            // Return the confirmation link to the live app's callback route.
-            emailRedirectTo: `${window.location.origin}/auth/callback`,
+            // Confirmation link returns here; /auth/confirm then sends them to sign in.
+            emailRedirectTo: `${window.location.origin}/auth/confirm`,
           },
         });
         if (error) throw error;
-        setNotice("Check your inbox and tap the confirmation link to finish signing up.");
+        setNotice("Check your inbox and tap the confirmation link, then sign in here.");
       }
     });
 
