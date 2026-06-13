@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Eye, EyeOff } from "lucide-react";
 import { loginWithDevToken } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { useAppStore } from "@/store/useAppStore";
@@ -15,6 +16,8 @@ export default function LoginPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [devToken, setDevToken] = useState("");
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [error, setError] = useState<string | null>(null);
@@ -53,6 +56,9 @@ export default function LoginPage() {
         const { error } = await supabase!.auth.signInWithPassword({ email, password });
         if (error) throw error;
       } else {
+        // Validate locally before hitting the backend.
+        if (password.length < 6) throw new Error("Password must be at least 6 characters.");
+        if (password !== confirmPassword) throw new Error("Passwords do not match.");
         // Capture the display name so it lands in user_metadata.full_name,
         // which the backend reads on sign-in to populate the user profile.
         const { error } = await supabase!.auth.signUp({
@@ -92,6 +98,8 @@ export default function LoginPage() {
                     setMode(m);
                     setError(null);
                     setNotice(null);
+                    setConfirmPassword("");
+                    setShowPassword(false);
                   }}
                   className={`rounded-lg py-2 transition-colors ${
                     mode === m ? "bg-white text-teal-700 shadow-sm" : "text-stone-500"
@@ -155,16 +163,65 @@ export default function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 className={fieldClass}
               />
-              <input
-                type="password"
-                required
-                minLength={6}
-                autoComplete={mode === "signin" ? "current-password" : "new-password"}
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className={fieldClass}
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  required
+                  minLength={6}
+                  autoComplete={mode === "signin" ? "current-password" : "new-password"}
+                  placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className={`${fieldClass} pr-11`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  title={showPassword ? "Hide password" : "Show password"}
+                  className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-stone-400 active:text-stone-600"
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-5 w-5" strokeWidth={2} />
+                  ) : (
+                    <Eye className="h-5 w-5" strokeWidth={2} />
+                  )}
+                </button>
+              </div>
+              {mode === "signup" && (
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    required
+                    minLength={6}
+                    autoComplete="new-password"
+                    placeholder="Confirm password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className={`${fieldClass} pr-11 ${
+                      confirmPassword && confirmPassword !== password
+                        ? "border-red-300 focus:border-red-400 focus:ring-red-100"
+                        : ""
+                    }`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    title={showPassword ? "Hide password" : "Show password"}
+                    className="absolute right-0 top-0 flex h-12 w-11 items-center justify-center text-stone-400 active:text-stone-600"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-5 w-5" strokeWidth={2} />
+                    ) : (
+                      <Eye className="h-5 w-5" strokeWidth={2} />
+                    )}
+                  </button>
+                  {confirmPassword && confirmPassword !== password && (
+                    <p className="mt-1 px-1 text-xs text-red-600">Passwords do not match</p>
+                  )}
+                </div>
+              )}
               <button
                 type="submit"
                 disabled={busy}

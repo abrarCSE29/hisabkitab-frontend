@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
-import { Check, House, LogOut, Plus, UserRound, UsersRound, X } from "lucide-react";
+import { LogOut, UsersRound, X } from "lucide-react";
 import { logout } from "@/lib/auth";
 import { useAppStore } from "@/store/useAppStore";
 
@@ -11,17 +11,10 @@ interface SideDrawerProps {
   onClose: () => void;
 }
 
-const navLinks = [
-  { href: "/dashboard", icon: House, label: "Home" },
-  { href: "/add", icon: Plus, label: "New entry" },
-  { href: "/family", icon: UsersRound, label: "Family space" },
-];
+const navLinks = [{ href: "/family", icon: UsersRound, label: "Family space" }];
 
 export default function SideDrawer({ open, onClose }: SideDrawerProps) {
   const user = useAppStore((s) => s.user);
-  const workspace = useAppStore((s) => s.workspace);
-  const families = useAppStore((s) => s.families);
-  const setWorkspace = useAppStore((s) => s.setWorkspace);
 
   // Lock background scroll and allow Esc to close while open.
   useEffect(() => {
@@ -65,57 +58,7 @@ export default function SideDrawer({ open, onClose }: SideDrawerProps) {
           </button>
         </div>
 
-        {/* Workspace switcher */}
-        <div className="px-3 pt-4">
-          <p className="px-3 pb-1.5 text-[11px] font-semibold uppercase tracking-wide text-stone-400">
-            Workspace
-          </p>
-          <div className="flex flex-col gap-1">
-            <button
-              onClick={() => {
-                setWorkspace({ mode: "solo" });
-                onClose();
-              }}
-              className={`flex h-11 items-center gap-3 rounded-xl px-3 text-sm font-medium ${
-                workspace.mode === "solo"
-                  ? "bg-teal-50 text-teal-700"
-                  : "text-stone-700 active:bg-stone-100"
-              }`}
-            >
-              <UserRound className="h-[18px] w-[18px]" strokeWidth={2} /> Personal
-              {workspace.mode === "solo" && (
-                <Check className="ml-auto h-4 w-4 text-teal-600" strokeWidth={2.5} />
-              )}
-            </button>
-            {families.map((family) => {
-              const active = workspace.mode === "family" && workspace.familyId === family._id;
-              return (
-                <button
-                  key={family._id}
-                  onClick={() => {
-                    setWorkspace({
-                      mode: "family",
-                      familyId: family._id,
-                      familyName: family.name,
-                    });
-                    onClose();
-                  }}
-                  className={`flex h-11 items-center gap-3 rounded-xl px-3 text-sm font-medium ${
-                    active ? "bg-teal-50 text-teal-700" : "text-stone-700 active:bg-stone-100"
-                  }`}
-                >
-                  <UsersRound className="h-[18px] w-[18px] shrink-0" strokeWidth={2} />
-                  <span className="truncate">{family.name}</span>
-                  {active && (
-                    <Check className="ml-auto h-4 w-4 shrink-0 text-teal-600" strokeWidth={2.5} />
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        <nav className="mt-3 flex flex-col gap-1 border-t border-stone-100 px-3 pt-3">
+        <nav className="mt-3 flex flex-col gap-1 px-3 pt-3">
           {navLinks.map((link) => {
             const Icon = link.icon;
             return (

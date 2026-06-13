@@ -1,21 +1,27 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Menu, RefreshCw } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Menu, RefreshCw, UsersRound, X } from "lucide-react";
 import AppBar from "@/components/AppBar";
 import AuthGate from "@/components/AuthGate";
 import BottomNav from "@/components/BottomNav";
 import FilterSheet from "@/components/FilterSheet";
 import SideDrawer from "@/components/SideDrawer";
 import VoucherFeed from "@/components/VoucherFeed";
+import WorkspaceSwitcher from "@/components/WorkspaceSwitcher";
 import { api } from "@/lib/api";
 import { applyVoucherFilters, countActiveFilters } from "@/lib/filters";
 import { isCurrentMonth, taka } from "@/lib/format";
 import { useAppStore } from "@/store/useAppStore";
 
+const COACHMARK_KEY = "hisabkitab-family-coachmark";
+
 function Dashboard() {
+  const router = useRouter();
   const user = useAppStore((s) => s.user);
   const workspace = useAppStore((s) => s.workspace);
+  const families = useAppStore((s) => s.families);
   const vouchers = useAppStore((s) => s.vouchers);
   const setVouchers = useAppStore((s) => s.setVouchers);
   const setCategories = useAppStore((s) => s.setCategories);
@@ -26,6 +32,7 @@ function Dashboard() {
   const [activeCard, setActiveCard] = useState(0);
   const [carouselPaused, setCarouselPaused] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [coachmark, setCoachmark] = useState(false);
   const filters = useAppStore((s) => s.filters);
   const resetFilters = useAppStore((s) => s.resetFilters);
   const carouselRef = useRef<HTMLDivElement>(null);
@@ -73,6 +80,20 @@ function Dashboard() {
     void refresh();
   }, [refresh]);
 
+  // First-run nudge: once the feed has loaded, show the coachmark to users who
+  // have no families yet (and haven't dismissed it before).
+  useEffect(() => {
+    if (loading) return;
+    const seen = localStorage.getItem(COACHMARK_KEY) === "1";
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setCoachmark(!seen && families.length === 0);
+  }, [loading, families.length]);
+
+  const dismissCoachmark = useCallback(() => {
+    localStorage.setItem(COACHMARK_KEY, "1");
+    setCoachmark(false);
+  }, []);
+
   const visibleVouchers = applyVoucherFilters(vouchers, filters);
   const activeFilterCount = countActiveFilters(filters);
 
@@ -114,9 +135,8 @@ function Dashboard() {
   return (
     <div className="flex h-dvh flex-col overflow-hidden pb-20">
       <AppBar
-        center
-        title={workspace.mode === "family" ? workspace.familyName : "Personal"}
-        subtitle={workspace.mode === "family" ? "Family workspace" : "Solo workspace"}
+        bare
+        title={<WorkspaceSwitcher highlighted={coachmark} />}
         leading={
           <button
             onClick={() => setDrawerOpen(true)}
@@ -150,6 +170,53 @@ function Dashboard() {
       />
 
       <SideDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
+
+      {/* First-run coachmark: dims the screen and points at the workspace
+          switcher so new users know where to create their family. */}
+      {coachmark && (
+        <>
+          {/* Dim sits below the top bar (z-20) so the switcher stays lit. */}
+          <button
+            aria-label="Dismiss"
+            onClick={dismissCoachmark}
+            className="fixed inset-0 z-[15] h-full w-full cursor-default bg-stone-900/55 backdrop-blur-[1px]"
+          />
+          <div className="fixed left-1/2 top-[3.75rem] z-50 w-[19rem] max-w-[90vw] -translate-x-1/2">
+            {/* arrow pointing up at the switcher */}
+            <div className="mx-auto h-3 w-3 -translate-y-1.5 rotate-45 rounded-sm bg-white" />
+            <div className="-mt-1.5 rounded-2xl bg-white p-4 shadow-2xl shadow-stone-900/30">
+              <div className="flex items-start gap-3">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-teal-500 to-emerald-500 text-white">
+                  <UsersRound className="h-5 w-5" strokeWidth={2.25} />
+                </span>
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-stone-900">Track expenses together 👋</p>
+                  <p className="mt-0.5 text-[13px] leading-snug text-stone-500">
+                    Tap the name above to switch spaces, or create a family to share a budget with
+                    others.
+                  </p>
+                </div>
+                <button
+                  onClick={dismissCoachmark}
+                  aria-label="Close"
+                  className="-mr-1 -mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-stone-400 active:bg-stone-100"
+                >
+                  <X className="h-4 w-4" strokeWidth={2.25} />
+                </button>
+              </div>
+              <button
+                onClick={() => {
+                  dismissCoachmark();
+                  router.push("/family");
+                }}
+                className="mt-3 flex h-11 w-full items-center justify-center rounded-xl bg-gradient-to-r from-teal-600 to-emerald-500 text-sm font-semibold text-white shadow-md shadow-teal-600/25 active:scale-[0.99]"
+              >
+                Create a family
+              </button>
+            </div>
+          </div>
+        </>
+      )}
 
       <div className="flex min-h-0 flex-1 flex-col gap-4 px-4 pt-4">
         {/* Swipeable stat cards: Spent → Earned → Net */}
