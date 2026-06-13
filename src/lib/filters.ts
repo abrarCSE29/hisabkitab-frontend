@@ -1,9 +1,10 @@
 import { parseIso } from "@/lib/format";
-import type { Voucher } from "@/lib/types";
+import type { Voucher, VoucherType } from "@/lib/types";
 
 export type VoucherSort = "newest" | "amount_desc" | "amount_asc";
 
 export interface VoucherFilters {
+  type: VoucherType | null; // null = both income and expense
   memberIds: string[]; // creator user_ids (family workspace)
   categoryIds: string[];
   sort: VoucherSort;
@@ -12,6 +13,7 @@ export interface VoucherFilters {
 }
 
 export const EMPTY_FILTERS: VoucherFilters = {
+  type: null,
   memberIds: [],
   categoryIds: [],
   sort: "newest",
@@ -21,6 +23,7 @@ export const EMPTY_FILTERS: VoucherFilters = {
 
 export function countActiveFilters(filters: VoucherFilters): number {
   return (
+    (filters.type !== null ? 1 : 0) +
     (filters.memberIds.length > 0 ? 1 : 0) +
     (filters.categoryIds.length > 0 ? 1 : 0) +
     (filters.sort !== "newest" ? 1 : 0) +
@@ -31,6 +34,9 @@ export function countActiveFilters(filters: VoucherFilters): number {
 export function applyVoucherFilters(vouchers: Voucher[], filters: VoucherFilters): Voucher[] {
   let result = vouchers;
 
+  if (filters.type !== null) {
+    result = result.filter((v) => v.type === filters.type);
+  }
   if (filters.memberIds.length > 0) {
     result = result.filter((v) => filters.memberIds.includes(v.user_id));
   }

@@ -4,12 +4,19 @@ import { useEffect } from "react";
 import { CalendarRange, SlidersHorizontal } from "lucide-react";
 import { categoryColor, categoryEmoji } from "@/lib/categoryMeta";
 import type { VoucherSort } from "@/lib/filters";
+import type { VoucherType } from "@/lib/types";
 import { useAppStore } from "@/store/useAppStore";
 
 const SORT_OPTIONS: { id: VoucherSort; label: string }[] = [
   { id: "newest", label: "Newest" },
   { id: "amount_desc", label: "৳ High → Low" },
   { id: "amount_asc", label: "৳ Low → High" },
+];
+
+const TYPE_OPTIONS: { id: VoucherType | null; label: string }[] = [
+  { id: null, label: "All" },
+  { id: "expense", label: "খরচ" },
+  { id: "income", label: "আয়" },
 ];
 
 function toggle(list: string[], value: string): string[] {
@@ -68,6 +75,33 @@ export default function FilterSheet() {
         </div>
 
         <div className="flex flex-col gap-5 overflow-y-auto px-5 pb-4 pt-4">
+          {/* By type — income vs expense */}
+          <div className="flex flex-col gap-2">
+            <h3 className="text-sm font-semibold text-stone-600">Type</h3>
+            <div className="grid grid-cols-3 rounded-xl bg-stone-100 p-1 text-sm font-semibold">
+              {TYPE_OPTIONS.map((option) => {
+                const active = filters.type === option.id;
+                const activeClass =
+                  option.id === "expense"
+                    ? "bg-white text-red-600 shadow-sm"
+                    : option.id === "income"
+                      ? "bg-white text-emerald-600 shadow-sm"
+                      : "bg-white text-stone-800 shadow-sm";
+                return (
+                  <button
+                    key={option.label}
+                    onClick={() => setFilters({ type: option.id })}
+                    className={`rounded-lg py-2 transition-colors ${
+                      active ? activeClass : "text-stone-500"
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           {/* By family member — only in family workspace */}
           {members.length > 0 && (
             <div className="flex flex-col gap-2">
