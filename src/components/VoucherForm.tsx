@@ -39,6 +39,7 @@ export default function VoucherForm({ initial, submitLabel, onSubmit }: VoucherF
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [photoMenuOpen, setPhotoMenuOpen] = useState(false);
+  const [scanning, setScanning] = useState(false);
   // OCR feedback: shown once an auto-fill completes; `ocrRating` records the choice.
   const [ocrDone, setOcrDone] = useState(false);
   const [ocrRating, setOcrRating] = useState<"up" | "down" | null>(null);
@@ -77,6 +78,7 @@ export default function VoucherForm({ initial, submitLabel, onSubmit }: VoucherF
   async function runOcr() {
     if (!imageUrl) return;
     setBusy("Reading receipt with AI…");
+    setScanning(true);
     setError(null);
     try {
       const result = await api.ocr(imageUrl);
@@ -91,6 +93,7 @@ export default function VoucherForm({ initial, submitLabel, onSubmit }: VoucherF
       setError(err instanceof Error ? err.message : "OCR failed");
     } finally {
       setBusy(null);
+      setScanning(false);
     }
   }
 
@@ -121,6 +124,32 @@ export default function VoucherForm({ initial, submitLabel, onSubmit }: VoucherF
 
   return (
     <div className="flex flex-col gap-6 pb-36">
+      {/* OCR scanning overlay — shown while the receipt is being read */}
+      {scanning && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
+          <div className="absolute inset-0 bg-stone-900/60 backdrop-blur-sm" />
+          <div className="relative w-full max-w-xs rounded-2xl bg-white p-5 text-center shadow-2xl">
+            <div className="relative mx-auto h-44 w-36 overflow-hidden rounded-xl bg-stone-100 ring-1 ring-stone-200">
+              {imageUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={imageUrl} alt="" className="h-full w-full object-cover" />
+              ) : (
+                <div className="flex h-full items-center justify-center text-stone-300">
+                  <Sparkles className="h-10 w-10" strokeWidth={1.75} />
+                </div>
+              )}
+              {/* sweeping beam + bright scan line */}
+              <div className="pointer-events-none absolute inset-x-0 h-12 animate-scan border-b-2 border-teal-300 bg-gradient-to-b from-transparent to-teal-400/40 shadow-[0_2px_12px_rgba(45,212,191,0.7)]" />
+            </div>
+            <p className="mt-4 flex items-center justify-center gap-1.5 text-base font-bold text-stone-900">
+              <Sparkles className="h-4 w-4 text-amber-500" strokeWidth={2} />
+              Getting your items
+            </p>
+            <p className="mt-0.5 text-sm text-stone-500">Hang tight…</p>
+          </div>
+        </div>
+      )}
+
       {/* Type toggle — compact, out of the way */}
       <div className="mx-auto grid w-60 grid-cols-2 rounded-full bg-stone-200 p-1 text-sm font-semibold">
         {(["expense", "income"] as const).map((t) => (
