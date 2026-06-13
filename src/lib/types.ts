@@ -35,6 +35,7 @@ export interface FamilyMember {
   role: "admin" | "member";
   email: string | null;
   name: string | null;
+  avatar_url: string | null;
 }
 
 export interface Family {

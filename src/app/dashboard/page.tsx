@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Menu, RefreshCw } from "lucide-react";
+import AppBar from "@/components/AppBar";
 import AuthGate from "@/components/AuthGate";
 import BottomNav from "@/components/BottomNav";
 import FilterSheet from "@/components/FilterSheet";
@@ -110,131 +112,135 @@ function Dashboard() {
   ];
 
   return (
-    <div className="flex h-dvh flex-col gap-4 overflow-hidden px-4 pb-24 pt-6">
-      <header className="flex shrink-0 items-center gap-3">
-        <button
-          onClick={() => setDrawerOpen(true)}
-          aria-label="Open menu"
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white ring-1 ring-stone-200 active:bg-stone-100"
-        >
-          <span className="flex flex-col gap-[3px]">
-            <span className="h-0.5 w-4 rounded-full bg-stone-600" />
-            <span className="h-0.5 w-4 rounded-full bg-stone-600" />
-            <span className="h-0.5 w-4 rounded-full bg-stone-600" />
-          </span>
-        </button>
-
-        {/* Active workspace, centered */}
-        <h1 className="min-w-0 flex-1 truncate text-center text-lg font-bold">
-          {workspace.mode === "family" ? `👪 ${workspace.familyName}` : "Personal"}
-        </h1>
-
-        <button
-          onClick={() => setDrawerOpen(true)}
-          aria-label="Open profile menu"
-          className="ml-auto shrink-0"
-        >
-          {user?.avatar_url ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={user.avatar_url}
-              alt={user.name ?? "Profile"}
-              referrerPolicy="no-referrer"
-              className="h-10 w-10 rounded-full ring-2 ring-teal-100"
-            />
-          ) : (
-            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-teal-600 text-base font-semibold text-white">
-              {(user?.name ?? user?.email ?? "?").charAt(0).toUpperCase()}
-            </span>
-          )}
-        </button>
-      </header>
+    <div className="flex h-dvh flex-col overflow-hidden pb-20">
+      <AppBar
+        center
+        title={workspace.mode === "family" ? workspace.familyName : "Personal"}
+        subtitle={workspace.mode === "family" ? "Family workspace" : "Solo workspace"}
+        leading={
+          <button
+            onClick={() => setDrawerOpen(true)}
+            aria-label="Open menu"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white active:bg-white/20"
+          >
+            <Menu className="h-5 w-5" strokeWidth={2.25} />
+          </button>
+        }
+        trailing={
+          <button
+            onClick={() => setDrawerOpen(true)}
+            aria-label="Open profile menu"
+            className="shrink-0 p-0.5"
+          >
+            {user?.avatar_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={user.avatar_url}
+                alt={user.name ?? "Profile"}
+                referrerPolicy="no-referrer"
+                className="h-9 w-9 rounded-full ring-2 ring-white/60"
+              />
+            ) : (
+              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/20 text-base font-semibold text-white ring-1 ring-white/40">
+                {(user?.name ?? user?.email ?? "?").charAt(0).toUpperCase()}
+              </span>
+            )}
+          </button>
+        }
+      />
 
       <SideDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
 
-      {/* Swipeable stat cards: Spent → Earned → Net */}
-      <section className="flex shrink-0 flex-col gap-2">
-        <div
-          ref={carouselRef}
-          className="no-scrollbar -mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4"
-          onTouchStart={() => setCarouselPaused(true)}
-          onTouchEnd={() => setCarouselPaused(false)}
-          onScroll={(e) => {
-            const el = e.currentTarget;
-            const maxScroll = el.scrollWidth - el.clientWidth;
-            if (maxScroll > 0) {
-              setActiveCard(Math.round((el.scrollLeft / maxScroll) * (statCards.length - 1)));
-            }
-          }}
-        >
-          {statCards.map((card) => (
-            <div
-              key={card.label}
-              className={`w-[86%] shrink-0 snap-center rounded-3xl bg-gradient-to-b p-5 text-white shadow-lg ${card.gradient}`}
-            >
-              <p className="text-xs font-medium uppercase tracking-wide text-white/75">
-                {month} · {card.label}
-              </p>
-              <p className="mt-1 text-4xl font-extrabold tracking-tight">
-                {card.value < 0 ? `−${taka(Math.abs(card.value))}` : taka(card.value)}
-              </p>
-              <p className="mt-3 inline-block rounded-full bg-white/15 px-3 py-1 text-xs font-semibold">
-                {card.sub}
-              </p>
-            </div>
-          ))}
-        </div>
-        <div className="flex justify-center gap-1.5">
-          {statCards.map((card, index) => (
-            <span
-              key={card.label}
-              className={`h-1.5 rounded-full transition-all ${
-                index === activeCard ? "w-5 bg-teal-600" : "w-1.5 bg-stone-300"
-              }`}
-            />
-          ))}
-        </div>
-      </section>
-
-      {/* Entries card — the list scrolls inside, not the page */}
-      <section className="flex min-h-0 flex-1 flex-col rounded-2xl border border-stone-200/80 bg-white/80 shadow-sm shadow-stone-300/40 backdrop-blur-sm">
-        <div className="flex shrink-0 items-center justify-between px-4 pb-1.5 pt-3">
-          <h2 className="text-sm font-semibold text-stone-600">Entries</h2>
-          <button
-            onClick={() => void refresh()}
-            aria-label="Refresh entries"
-            className={`flex h-8 w-8 items-center justify-center rounded-full text-base text-teal-700 ring-1 ring-stone-200 active:bg-stone-100 ${
-              loading ? "animate-spin" : ""
-            }`}
+      <div className="flex min-h-0 flex-1 flex-col gap-4 px-4 pt-4">
+        {/* Swipeable stat cards: Spent → Earned → Net */}
+        <section className="flex shrink-0 flex-col gap-2">
+          <div
+            ref={carouselRef}
+            className="no-scrollbar -mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4"
+            onTouchStart={() => setCarouselPaused(true)}
+            onTouchEnd={() => setCarouselPaused(false)}
+            onScroll={(e) => {
+              const el = e.currentTarget;
+              const maxScroll = el.scrollWidth - el.clientWidth;
+              if (maxScroll > 0) {
+                setActiveCard(Math.round((el.scrollLeft / maxScroll) * (statCards.length - 1)));
+              }
+            }}
           >
-            ↻
-          </button>
-        </div>
+            {statCards.map((card) => (
+              <div
+                key={card.label}
+                className={`w-[86%] shrink-0 snap-center rounded-2xl bg-gradient-to-b p-5 text-white shadow-lg ${card.gradient}`}
+              >
+                <p className="text-xs font-medium uppercase tracking-wide text-white/75">
+                  {month} · {card.label}
+                </p>
+                <p className="mt-1 text-4xl font-extrabold tracking-tight">
+                  {card.value < 0 ? `−${taka(Math.abs(card.value))}` : taka(card.value)}
+                </p>
+                <p className="mt-3 inline-block rounded-full bg-white/15 px-3 py-1 text-xs font-semibold">
+                  {card.sub}
+                </p>
+              </div>
+            ))}
+          </div>
+          <div className="flex justify-center gap-1.5">
+            {statCards.map((card, index) => (
+              <span
+                key={card.label}
+                className={`h-1.5 rounded-full transition-all ${
+                  index === activeCard ? "w-5 bg-teal-600" : "w-1.5 bg-stone-300"
+                }`}
+              />
+            ))}
+          </div>
+        </section>
 
-        {error && (
-          <p className="mx-3 mb-2 shrink-0 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
-            {error}
-          </p>
-        )}
-        {activeFilterCount > 0 && (
-          <div className="mx-3 mb-2 flex shrink-0 items-center justify-between rounded-xl bg-teal-50 px-3.5 py-2 text-xs font-medium text-teal-700">
-            <span>
-              Filtered · showing {visibleVouchers.length} of {vouchers.length}
-            </span>
-            <button onClick={resetFilters} className="font-bold underline">
-              Clear
+        {/* Entries card — the list scrolls inside, not the page */}
+        <section className="mb-4 flex min-h-0 flex-1 flex-col rounded-2xl border border-stone-200 bg-white shadow-sm shadow-stone-900/5">
+          <div className="flex shrink-0 items-center justify-between border-b border-stone-100 px-4 py-2.5">
+            <h2 className="flex items-baseline gap-2 text-base font-bold text-stone-900">
+              Entries
+              {!loading && (
+                <span className="text-xs font-medium text-stone-400">
+                  {visibleVouchers.length}
+                </span>
+              )}
+            </h2>
+            <button
+              onClick={() => void refresh()}
+              aria-label="Refresh entries"
+              className="flex h-9 w-9 items-center justify-center rounded-full text-stone-500 active:bg-stone-100"
+            >
+              <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
             </button>
           </div>
-        )}
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-3">
-          {loading ? (
-            <div className="animate-pulse p-8 text-center text-sm text-stone-400">Loading…</div>
-          ) : (
-            <VoucherFeed vouchers={visibleVouchers} />
+          {error && (
+            <p className="mx-3 mt-2 shrink-0 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
+              {error}
+            </p>
           )}
-        </div>
-      </section>
+          {activeFilterCount > 0 && (
+            <div className="mx-3 mt-2 flex shrink-0 items-center justify-between rounded-xl bg-teal-50 px-3.5 py-2 text-xs font-medium text-teal-700">
+              <span>
+                Filtered · showing {visibleVouchers.length} of {vouchers.length}
+              </span>
+              <button onClick={resetFilters} className="font-bold underline">
+                Clear
+              </button>
+            </div>
+          )}
+
+          <div className="min-h-0 flex-1 overflow-hidden px-3 py-2">
+            {loading ? (
+              <div className="animate-pulse p-8 text-center text-sm text-stone-400">Loading…</div>
+            ) : (
+              <VoucherFeed vouchers={visibleVouchers} />
+            )}
+          </div>
+        </section>
+      </div>
 
       <FilterSheet />
       <BottomNav />

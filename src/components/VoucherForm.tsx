@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { Camera, ImagePlus, Plus, Sparkles, X } from "lucide-react";
 import { api } from "@/lib/api";
-import { categoryEmoji } from "@/lib/categoryMeta";
+import { categoryColor, categoryEmoji } from "@/lib/categoryMeta";
 import { uploadReceipt } from "@/lib/receipts";
 import { supabase } from "@/lib/supabase";
 import type { Voucher, VoucherType, VoucherUpdatePayload } from "@/lib/types";
@@ -200,10 +201,10 @@ export default function VoucherForm({ initial, submitLabel, onSubmit }: VoucherF
               />
               <button
                 onClick={() => setItems((rows) => rows.filter((_, i) => i !== index))}
-                className="px-1 text-stone-400"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-stone-400 active:bg-stone-100"
                 aria-label="Remove item"
               >
-                ✕
+                <X className="h-4 w-4" strokeWidth={2.25} />
               </button>
             </div>
           ))}
@@ -212,13 +213,16 @@ export default function VoucherForm({ initial, submitLabel, onSubmit }: VoucherF
 
       <button
         onClick={() => setItems((rows) => [...rows, { name: "", amount: "" }])}
-        className="mx-auto rounded-full bg-white px-4 py-1.5 text-sm font-medium text-teal-700 ring-1 ring-stone-200 active:bg-stone-50"
+        className="mx-auto flex items-center gap-1.5 rounded-full bg-white px-4 py-2 text-sm font-medium text-teal-700 ring-1 ring-stone-200 active:bg-stone-50"
       >
-        ＋ আরো item যোগ করুন
+        <Plus className="h-4 w-4" strokeWidth={2.25} /> আরো item যোগ করুন
       </button>
 
       {/* Category — one swipeable row, emoji-first */}
       <section className="flex flex-col gap-2">
+        <p className="px-1 text-xs font-semibold uppercase tracking-wide text-stone-400">
+          Category
+        </p>
         <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 py-1">
           {typeCategories.map((category) => {
             const active = categoryId === category.id;
@@ -226,13 +230,19 @@ export default function VoucherForm({ initial, submitLabel, onSubmit }: VoucherF
               <button
                 key={category.id}
                 onClick={() => setCategoryId(active ? null : category.id)}
-                className={`flex min-w-[4.5rem] shrink-0 flex-col items-center gap-1 rounded-2xl px-2 py-2.5 transition-all ${
+                className={`flex min-w-[4.5rem] shrink-0 flex-col items-center gap-1.5 rounded-2xl px-2 py-2.5 transition-all ${
                   active
                     ? "scale-105 bg-teal-600 text-white shadow-md shadow-teal-600/30"
                     : "bg-white text-stone-600 ring-1 ring-stone-200"
                 }`}
               >
-                <span className="text-xl leading-none">{categoryEmoji(category.id)}</span>
+                <span
+                  className={`flex h-9 w-9 items-center justify-center rounded-full text-xl leading-none ${
+                    active ? "bg-white/20" : categoryColor(category.id)
+                  }`}
+                >
+                  {categoryEmoji(category.id)}
+                </span>
                 <span className="text-[11px] font-medium leading-none">{category.name_bn}</span>
               </button>
             );
@@ -272,16 +282,17 @@ export default function VoucherForm({ initial, submitLabel, onSubmit }: VoucherF
             <button
               onClick={() => setPhotoMenuOpen(true)}
               disabled={busy !== null}
-              className="h-11 flex-1 rounded-xl bg-white text-sm font-medium ring-1 ring-stone-200 active:bg-stone-100 disabled:opacity-50"
+              className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl bg-white text-sm font-medium text-stone-700 ring-1 ring-stone-200 active:bg-stone-100 disabled:opacity-50"
             >
-              📷 {imageUrl ? "Replace photo" : "Receipt photo"}
+              <Camera className="h-4 w-4" strokeWidth={2} />
+              {imageUrl ? "Replace photo" : "Receipt photo"}
             </button>
             <button
               onClick={() => void runOcr()}
               disabled={!imageUrl || busy !== null}
-              className="h-11 flex-1 rounded-xl bg-amber-100 text-sm font-medium text-amber-800 active:bg-amber-200 disabled:opacity-40"
+              className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl bg-amber-100 text-sm font-medium text-amber-800 active:bg-amber-200 disabled:opacity-40"
             >
-              ✨ Auto-fill items
+              <Sparkles className="h-4 w-4" strokeWidth={2} /> Auto-fill items
             </button>
           </>
         )}
@@ -315,24 +326,31 @@ export default function VoucherForm({ initial, submitLabel, onSubmit }: VoucherF
         }`}
       >
         <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-stone-200" />
+        <p className="px-1 pb-2 text-sm font-bold text-stone-900">Add receipt photo</p>
         <div className="flex flex-col gap-2">
           <button
             onClick={() => {
               setPhotoMenuOpen(false);
               cameraInput.current?.click();
             }}
-            className="flex h-13 items-center gap-3 rounded-xl bg-stone-50 px-4 py-3.5 text-sm font-semibold active:bg-stone-100"
+            className="flex items-center gap-3 rounded-xl bg-stone-50 px-4 py-3.5 text-sm font-semibold active:bg-stone-100"
           >
-            <span className="text-xl">📷</span> Take photo
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-teal-50 text-teal-700">
+              <Camera className="h-[18px] w-[18px]" strokeWidth={2} />
+            </span>
+            Take photo
           </button>
           <button
             onClick={() => {
               setPhotoMenuOpen(false);
               galleryInput.current?.click();
             }}
-            className="flex h-13 items-center gap-3 rounded-xl bg-stone-50 px-4 py-3.5 text-sm font-semibold active:bg-stone-100"
+            className="flex items-center gap-3 rounded-xl bg-stone-50 px-4 py-3.5 text-sm font-semibold active:bg-stone-100"
           >
-            <span className="text-xl">🖼️</span> Upload from gallery
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-teal-50 text-teal-700">
+              <ImagePlus className="h-[18px] w-[18px]" strokeWidth={2} />
+            </span>
+            Upload from gallery
           </button>
           <button
             onClick={() => setPhotoMenuOpen(false)}
@@ -344,7 +362,7 @@ export default function VoucherForm({ initial, submitLabel, onSubmit }: VoucherF
       </div>
 
       {/* Sticky save — always in the thumb zone */}
-      <div className="fixed inset-x-0 bottom-0 z-20 mx-auto w-full max-w-md bg-gradient-to-t from-stone-50 via-stone-50/95 to-transparent px-4 pb-5 pt-8">
+      <div className="fixed inset-x-0 bottom-0 z-20 mx-auto w-full max-w-md bg-gradient-to-t from-stone-100 via-stone-100/95 to-transparent px-4 pb-5 pt-8">
         <button
           onClick={() => void save()}
           disabled={busy !== null || parsedItems.length === 0}

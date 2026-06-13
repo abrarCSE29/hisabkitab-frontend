@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
+import { Check, House, LogOut, Plus, UserRound, UsersRound, X } from "lucide-react";
 import { logout } from "@/lib/auth";
 import { useAppStore } from "@/store/useAppStore";
 
@@ -11,9 +12,9 @@ interface SideDrawerProps {
 }
 
 const navLinks = [
-  { href: "/dashboard", icon: "🏠", label: "Home" },
-  { href: "/add", icon: "➕", label: "New entry" },
-  { href: "/family", icon: "👪", label: "Family space" },
+  { href: "/dashboard", icon: House, label: "Home" },
+  { href: "/add", icon: Plus, label: "New entry" },
+  { href: "/family", icon: UsersRound, label: "Family space" },
 ];
 
 export default function SideDrawer({ open, onClose }: SideDrawerProps) {
@@ -40,7 +41,7 @@ export default function SideDrawer({ open, onClose }: SideDrawerProps) {
       <div
         onClick={onClose}
         aria-hidden
-        className={`fixed inset-0 z-30 bg-black/40 backdrop-blur-[2px] transition-opacity duration-300 ${
+        className={`fixed inset-0 z-30 bg-stone-900/40 backdrop-blur-[2px] transition-opacity duration-300 ${
           open ? "opacity-100" : "pointer-events-none opacity-0"
         }`}
       />
@@ -49,24 +50,24 @@ export default function SideDrawer({ open, onClose }: SideDrawerProps) {
       <aside
         role="dialog"
         aria-label="Menu"
-        className={`fixed inset-y-0 left-0 z-40 flex w-72 max-w-[82%] flex-col rounded-r-3xl bg-white shadow-2xl transition-transform duration-300 ease-out ${
+        className={`fixed inset-y-0 left-0 z-40 flex w-72 max-w-[82%] flex-col bg-white shadow-2xl transition-transform duration-300 ease-out ${
           open ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div className="flex items-center justify-between px-5 pb-2 pt-5">
+        <div className="flex h-14 items-center justify-between border-b border-stone-100 px-4">
           <span className="text-lg font-bold text-teal-700">হিসাবকিতাব</span>
           <button
             onClick={onClose}
             aria-label="Close menu"
-            className="flex h-9 w-9 items-center justify-center rounded-full text-stone-400 ring-1 ring-stone-200 active:bg-stone-100"
+            className="flex h-9 w-9 items-center justify-center rounded-full text-stone-400 active:bg-stone-100"
           >
-            ✕
+            <X className="h-5 w-5" strokeWidth={2.25} />
           </button>
         </div>
 
         {/* Workspace switcher */}
-        <div className="px-3 pt-1">
-          <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wide text-stone-400">
+        <div className="px-3 pt-4">
+          <p className="px-3 pb-1.5 text-[11px] font-semibold uppercase tracking-wide text-stone-400">
             Workspace
           </p>
           <div className="flex flex-col gap-1">
@@ -81,8 +82,10 @@ export default function SideDrawer({ open, onClose }: SideDrawerProps) {
                   : "text-stone-700 active:bg-stone-100"
               }`}
             >
-              <span className="text-lg">🙂</span> Personal
-              {workspace.mode === "solo" && <span className="ml-auto text-teal-600">✓</span>}
+              <UserRound className="h-[18px] w-[18px]" strokeWidth={2} /> Personal
+              {workspace.mode === "solo" && (
+                <Check className="ml-auto h-4 w-4 text-teal-600" strokeWidth={2.5} />
+              )}
             </button>
             {families.map((family) => {
               const active = workspace.mode === "family" && workspace.familyId === family._id;
@@ -101,27 +104,32 @@ export default function SideDrawer({ open, onClose }: SideDrawerProps) {
                     active ? "bg-teal-50 text-teal-700" : "text-stone-700 active:bg-stone-100"
                   }`}
                 >
-                  <span className="text-lg">👪</span>
+                  <UsersRound className="h-[18px] w-[18px] shrink-0" strokeWidth={2} />
                   <span className="truncate">{family.name}</span>
-                  {active && <span className="ml-auto text-teal-600">✓</span>}
+                  {active && (
+                    <Check className="ml-auto h-4 w-4 shrink-0 text-teal-600" strokeWidth={2.5} />
+                  )}
                 </button>
               );
             })}
           </div>
         </div>
 
-        <nav className="flex flex-col gap-1 border-t border-stone-100 px-3 pt-2 mt-2">
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              onClick={onClose}
-              className="flex h-12 items-center gap-3 rounded-xl px-3 text-sm font-medium text-stone-700 active:bg-stone-100"
-            >
-              <span className="text-lg">{link.icon}</span>
-              {link.label}
-            </Link>
-          ))}
+        <nav className="mt-3 flex flex-col gap-1 border-t border-stone-100 px-3 pt-3">
+          {navLinks.map((link) => {
+            const Icon = link.icon;
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                onClick={onClose}
+                className="flex h-12 items-center gap-3 rounded-xl px-3 text-sm font-medium text-stone-700 active:bg-stone-100"
+              >
+                <Icon className="h-[18px] w-[18px]" strokeWidth={2} />
+                {link.label}
+              </Link>
+            );
+          })}
         </nav>
 
         {/* Profile + sign out pinned to the bottom (thumb zone) */}
@@ -133,7 +141,7 @@ export default function SideDrawer({ open, onClose }: SideDrawerProps) {
                 src={user.avatar_url}
                 alt={user.name ?? "Profile"}
                 referrerPolicy="no-referrer"
-                className="h-11 w-11 shrink-0 rounded-full ring-2 ring-teal-100"
+                className="h-11 w-11 shrink-0 rounded-full ring-2 ring-stone-200"
               />
             ) : (
               <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-teal-600 text-lg font-semibold text-white">
@@ -147,9 +155,9 @@ export default function SideDrawer({ open, onClose }: SideDrawerProps) {
           </div>
           <button
             onClick={() => void logout()}
-            className="h-11 w-full rounded-xl bg-red-50 text-sm font-semibold text-red-600 active:bg-red-100"
+            className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-red-50 text-sm font-semibold text-red-600 active:bg-red-100"
           >
-            Sign out
+            <LogOut className="h-4 w-4" strokeWidth={2.25} /> Sign out
           </button>
         </div>
       </aside>

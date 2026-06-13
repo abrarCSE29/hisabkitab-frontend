@@ -18,6 +18,12 @@ function sessionToUser(session: Session) {
   };
 }
 
+/** Record the signed-in user in the backend `users` collection. The session
+ *  is already set, so api.me() carries the token; failures are non-fatal. */
+function syncUserToBackend(): void {
+  void api.me().catch(() => {});
+}
+
 /** Resolve the current session once on app start (Supabase or dev token). */
 export async function initAuth(): Promise<void> {
   const store = useAppStore.getState();
@@ -27,12 +33,14 @@ export async function initAuth(): Promise<void> {
     const { data } = await supabase.auth.getSession();
     if (data.session) {
       store.setSession(data.session.access_token, sessionToUser(data.session));
+      syncUserToBackend();
     } else {
       store.markAuthReady();
     }
     supabase.auth.onAuthStateChange((_event, session) => {
       if (session) {
         useAppStore.getState().setSession(session.access_token, sessionToUser(session));
+        syncUserToBackend();
       } else {
         useAppStore.getState().clearSession();
         useAppStore.getState().markAuthReady();

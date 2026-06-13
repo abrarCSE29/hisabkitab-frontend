@@ -92,4 +92,10 @@ export const api = {
       method: "POST",
       body: { code },
     }),
+
+  familyShareCode: (familyId: string) =>
+    request<{ code: string }>(`/family/${familyId}/share-code`),
+
+  rotateFamilyShareCode: (familyId: string) =>
+    request<{ code: string }>(`/family/${familyId}/share-code`, { method: "POST" }),
 };

@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect } from "react";
-import { categoryEmoji } from "@/lib/categoryMeta";
+import { CalendarRange, SlidersHorizontal } from "lucide-react";
+import { categoryColor, categoryEmoji } from "@/lib/categoryMeta";
 import type { VoucherSort } from "@/lib/filters";
 import { useAppStore } from "@/store/useAppStore";
 
@@ -61,8 +62,12 @@ export default function FilterSheet() {
         }`}
       >
         <div className="mx-auto mt-2.5 h-1 w-10 rounded-full bg-stone-200" />
+        <div className="flex items-center gap-2 border-b border-stone-100 px-5 pb-3 pt-2">
+          <SlidersHorizontal className="h-[18px] w-[18px] text-teal-700" strokeWidth={2.25} />
+          <h2 className="text-base font-bold text-stone-900">Filter entries</h2>
+        </div>
 
-        <div className="flex flex-col gap-5 overflow-y-auto px-5 pb-4 pt-3">
+        <div className="flex flex-col gap-5 overflow-y-auto px-5 pb-4 pt-4">
           {/* By family member — only in family workspace */}
           {members.length > 0 && (
             <div className="flex flex-col gap-2">
@@ -106,13 +111,19 @@ export default function FilterSheet() {
                     onClick={() =>
                       setFilters({ categoryIds: toggle(filters.categoryIds, category.id) })
                     }
-                    className={`flex items-center gap-1.5 rounded-full px-3 py-2 text-sm font-medium ${
+                    className={`flex items-center gap-1.5 rounded-full py-1.5 pl-1.5 pr-3 text-sm font-medium ${
                       active
                         ? "bg-teal-600 text-white"
                         : "bg-white text-stone-600 ring-1 ring-stone-200"
                     }`}
                   >
-                    <span>{categoryEmoji(category.id)}</span>
+                    <span
+                      className={`flex h-6 w-6 items-center justify-center rounded-full text-sm ${
+                        active ? "bg-white/20" : categoryColor(category.id)
+                      }`}
+                    >
+                      {categoryEmoji(category.id)}
+                    </span>
                     {category.name_bn}
                   </button>
                 );
@@ -140,7 +151,9 @@ export default function FilterSheet() {
 
           {/* Date range */}
           <div className="flex flex-col gap-2">
-            <h3 className="text-sm font-semibold text-stone-600">Date range</h3>
+            <h3 className="flex items-center gap-1.5 text-sm font-semibold text-stone-600">
+              <CalendarRange className="h-4 w-4 text-stone-400" strokeWidth={2} /> Date range
+            </h3>
             <div className="flex items-center gap-2">
               <input
                 type="date"

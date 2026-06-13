@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
+import { categoryColor, categoryEmoji } from "@/lib/categoryMeta";
+import AppBar, { BackButton } from "@/components/AppBar";
 import AuthGate from "@/components/AuthGate";
 import VoucherForm from "@/components/VoucherForm";
 import { api } from "@/lib/api";
@@ -17,25 +18,38 @@ function ReadOnlyVoucher({ voucher }: { voucher: Voucher }) {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="rounded-2xl bg-white p-4 border border-stone-200/80 shadow-sm shadow-stone-300/40">
-        <div className="flex items-center justify-between">
-          <span className="text-sm font-semibold">
-            {category?.label ?? voucher.category_id ?? "Uncategorized"}
+      <div className="overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm shadow-stone-900/5">
+        <div className="flex items-center gap-3 border-b border-stone-100 p-4">
+          <span
+            className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-2xl ${categoryColor(
+              voucher.category_id,
+            )}`}
+          >
+            {categoryEmoji(voucher.category_id)}
           </span>
-          <span className={`text-lg font-bold ${expense ? "text-red-600" : "text-emerald-600"}`}>
-            {expense ? "−" : "+"}
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-semibold text-stone-900">
+              {category?.label ?? voucher.category_id ?? "Uncategorized"}
+            </p>
+            <p className="truncate text-xs text-stone-500">
+              by {voucher.user_name ?? voucher.user_email ?? "family member"} ·{" "}
+              {voucherDate(voucher.created_at)}
+            </p>
+          </div>
+          <span
+            className={`shrink-0 text-lg font-bold ${expense ? "text-red-600" : "text-emerald-600"}`}
+          >
             {taka(voucher.voucher_total)}
           </span>
         </div>
-        <p className="mt-1 text-xs text-stone-500">
-          by {voucher.user_name ?? voucher.user_email ?? "family member"} ·{" "}
-          {voucherDate(voucher.created_at)}
-        </p>
-        <ul className="mt-3 flex flex-col gap-1.5 border-t border-stone-100 pt-3">
+        <ul className="flex flex-col">
           {voucher.items.map((item, index) => (
-            <li key={index} className="flex justify-between text-sm">
+            <li
+              key={index}
+              className="flex justify-between px-4 py-2.5 text-sm not-last:border-b not-last:border-stone-50"
+            >
               <span className="text-stone-600">{item.name || `Item ${index + 1}`}</span>
-              <span className="font-medium">{taka(item.amount)}</span>
+              <span className="font-semibold text-stone-900">{taka(item.amount)}</span>
             </li>
           ))}
         </ul>
@@ -47,7 +61,7 @@ function ReadOnlyVoucher({ voucher }: { voucher: Voucher }) {
           <img
             src={voucher.image_url}
             alt="Receipt attachment"
-            className="max-h-72 w-full rounded-2xl object-contain ring-1 ring-stone-200"
+            className="max-h-72 w-full rounded-2xl border border-stone-200 object-contain"
           />
         </a>
       )}
@@ -81,44 +95,36 @@ function VoucherDetail() {
   const isOwner = voucher !== null && voucher.user_id === user?.id;
 
   return (
-    <div className="flex flex-col gap-5 px-4 pb-24 pt-6">
-      <header className="flex items-center gap-3">
-        <Link
-          href="/dashboard"
-          aria-label="Back to dashboard"
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-white ring-1 ring-stone-200"
-        >
-          ←
-        </Link>
-        <div>
-          <h1 className="text-xl font-bold">{isOwner ? "Edit entry" : "Entry details"}</h1>
-          {voucher?.updated_at && (
-            <p className="text-xs text-stone-400">edited {voucherDate(voucher.updated_at)}</p>
-          )}
-        </div>
-      </header>
+    <div className="min-h-dvh">
+      <AppBar
+        title={isOwner ? "Edit entry" : "Entry details"}
+        subtitle={voucher?.updated_at ? `edited ${voucherDate(voucher.updated_at)}` : undefined}
+        leading={<BackButton />}
+      />
 
-      {error && <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>}
+      <div className="flex flex-col gap-5 px-4 pb-24 pt-5">
+        {error && <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>}
 
-      {!voucher && !error && (
-        <div className="animate-pulse rounded-2xl bg-white p-8 text-center text-sm text-stone-400">
-          Loading…
-        </div>
-      )}
+        {!voucher && !error && (
+          <div className="animate-pulse rounded-2xl border border-stone-200 bg-white p-8 text-center text-sm text-stone-400">
+            Loading…
+          </div>
+        )}
 
-      {voucher &&
-        (isOwner ? (
-          <VoucherForm
-            initial={voucher}
-            submitLabel="Save changes"
-            onSubmit={async (payload) => {
-              await api.updateVoucher(voucher._id, payload);
-              router.push("/dashboard");
-            }}
-          />
-        ) : (
-          <ReadOnlyVoucher voucher={voucher} />
-        ))}
+        {voucher &&
+          (isOwner ? (
+            <VoucherForm
+              initial={voucher}
+              submitLabel="Save changes"
+              onSubmit={async (payload) => {
+                await api.updateVoucher(voucher._id, payload);
+                router.push("/dashboard");
+              }}
+            />
+          ) : (
+            <ReadOnlyVoucher voucher={voucher} />
+          ))}
+      </div>
     </div>
   );
 }

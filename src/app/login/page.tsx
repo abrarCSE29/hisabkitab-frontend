@@ -6,9 +6,13 @@ import { loginWithDevToken } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { useAppStore } from "@/store/useAppStore";
 
+const fieldClass =
+  "h-12 w-full rounded-xl border border-stone-200 bg-stone-50 px-4 text-sm outline-none focus:border-teal-400 focus:bg-white focus:ring-2 focus:ring-teal-100";
+
 export default function LoginPage() {
   const router = useRouter();
   const accessToken = useAppStore((s) => s.accessToken);
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [devToken, setDevToken] = useState("");
@@ -49,116 +53,162 @@ export default function LoginPage() {
         const { error } = await supabase!.auth.signInWithPassword({ email, password });
         if (error) throw error;
       } else {
-        const { error } = await supabase!.auth.signUp({ email, password });
+        // Capture the display name so it lands in user_metadata.full_name,
+        // which the backend reads on sign-in to populate the user profile.
+        const { error } = await supabase!.auth.signUp({
+          email,
+          password,
+          options: { data: { full_name: name.trim() } },
+        });
         if (error) throw error;
         setNotice("Check your inbox to confirm your email, then sign in.");
+        setMode("signin");
       }
     });
 
   const submitDevToken = () => run(() => loginWithDevToken(devToken));
 
   return (
-    <main className="flex min-h-dvh flex-col justify-center gap-8 px-6 py-10">
-      <header className="text-center">
-        <h1 className="text-4xl font-bold text-teal-700">হিসাবকিতাব</h1>
-        <p className="mt-2 text-sm text-stone-500">
-          HisabKitab — track your family&apos;s daily expenses
-        </p>
+    <main className="flex min-h-dvh flex-col justify-center bg-gradient-to-br from-teal-600 via-emerald-500 to-teal-700 px-5 py-10">
+      {/* Brand */}
+      <header className="mb-6 flex flex-col items-center text-center">
+        <span className="mb-3 flex h-16 w-16 items-center justify-center rounded-2xl bg-white/15 text-3xl font-bold text-white ring-1 ring-white/30 backdrop-blur">
+          ৳
+        </span>
+        <h1 className="text-3xl font-bold text-white">হিসাবকিতাব</h1>
+        <p className="mt-1 text-sm text-white/80">Track your family&apos;s daily expenses</p>
       </header>
 
-      {error && (
-        <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>
-      )}
-      {notice && (
-        <p className="rounded-lg bg-teal-50 px-4 py-3 text-sm text-teal-700">{notice}</p>
-      )}
+      {/* Auth card */}
+      <div className="rounded-3xl bg-white p-6 shadow-2xl shadow-teal-900/20">
+        {supabase ? (
+          <div className="flex flex-col gap-5">
+            {/* Sign in / Sign up segmented toggle */}
+            <div className="grid grid-cols-2 rounded-xl bg-stone-100 p-1 text-sm font-semibold">
+              {(["signin", "signup"] as const).map((m) => (
+                <button
+                  key={m}
+                  onClick={() => {
+                    setMode(m);
+                    setError(null);
+                    setNotice(null);
+                  }}
+                  className={`rounded-lg py-2 transition-colors ${
+                    mode === m ? "bg-white text-teal-700 shadow-sm" : "text-stone-500"
+                  }`}
+                >
+                  {m === "signin" ? "Sign in" : "Sign up"}
+                </button>
+              ))}
+            </div>
 
-      {supabase ? (
-        <div className="flex flex-col gap-6">
-          <button
-            onClick={signInWithGoogle}
-            disabled={busy}
-            className="flex h-12 items-center justify-center gap-2 rounded-xl border border-stone-300 bg-white font-medium shadow-sm active:bg-stone-100 disabled:opacity-50"
-          >
-            <span className="text-lg">G</span> Continue with Google
-          </button>
+            {error && (
+              <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>
+            )}
+            {notice && (
+              <p className="rounded-xl bg-teal-50 px-4 py-3 text-sm text-teal-700">{notice}</p>
+            )}
 
-          <div className="flex items-center gap-3 text-xs text-stone-400">
-            <span className="h-px flex-1 bg-stone-200" /> or {" "}
-            <span className="h-px flex-1 bg-stone-200" />
+            <button
+              onClick={signInWithGoogle}
+              disabled={busy}
+              className="flex h-12 items-center justify-center gap-2.5 rounded-xl border border-stone-200 bg-white text-sm font-semibold text-stone-700 shadow-sm active:bg-stone-50 disabled:opacity-50"
+            >
+              <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden>
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.27-4.74 3.27-8.1Z" />
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23Z" />
+                <path fill="#FBBC05" d="M5.84 14.1a6.6 6.6 0 0 1 0-4.2V7.06H2.18a11 11 0 0 0 0 9.88l3.66-2.84Z" />
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1A11 11 0 0 0 2.18 7.06l3.66 2.84C6.71 7.3 9.14 5.38 12 5.38Z" />
+              </svg>
+              Continue with Google
+            </button>
+
+            <div className="flex items-center gap-3 text-xs text-stone-400">
+              <span className="h-px flex-1 bg-stone-200" /> or {" "}
+              <span className="h-px flex-1 bg-stone-200" />
+            </div>
+
+            <form
+              className="flex flex-col gap-3"
+              onSubmit={(e) => {
+                e.preventDefault();
+                void submitEmailPassword();
+              }}
+            >
+              {mode === "signup" && (
+                <input
+                  type="text"
+                  required
+                  autoComplete="name"
+                  placeholder="Your name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className={fieldClass}
+                />
+              )}
+              <input
+                type="email"
+                required
+                autoComplete="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className={fieldClass}
+              />
+              <input
+                type="password"
+                required
+                minLength={6}
+                autoComplete={mode === "signin" ? "current-password" : "new-password"}
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className={fieldClass}
+              />
+              <button
+                type="submit"
+                disabled={busy}
+                className="mt-1 h-12 rounded-xl bg-gradient-to-r from-teal-600 to-emerald-500 text-sm font-bold text-white shadow-lg shadow-teal-600/25 active:from-teal-700 active:to-emerald-600 disabled:opacity-50"
+              >
+                {busy ? "Please wait…" : mode === "signin" ? "Sign in" : "Create account"}
+              </button>
+            </form>
           </div>
-
+        ) : (
           <form
             className="flex flex-col gap-3"
             onSubmit={(e) => {
               e.preventDefault();
-              void submitEmailPassword();
+              void submitDevToken();
             }}
           >
-            <input
-              type="email"
+            {error && (
+              <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>
+            )}
+            <p className="text-sm text-stone-500">
+              Supabase isn&apos;t configured (<code>NEXT_PUBLIC_SUPABASE_URL</code>), so paste a
+              backend-accepted JWT to test locally:
+            </p>
+            <textarea
               required
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="h-12 rounded-xl border border-stone-300 bg-white px-4"
-            />
-            <input
-              type="password"
-              required
-              minLength={6}
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="h-12 rounded-xl border border-stone-300 bg-white px-4"
+              rows={4}
+              placeholder="eyJhbGciOiJIUzI1NiIs..."
+              value={devToken}
+              onChange={(e) => setDevToken(e.target.value)}
+              className="rounded-xl border border-stone-200 bg-stone-50 p-3 font-mono text-xs outline-none focus:border-teal-400 focus:bg-white focus:ring-2 focus:ring-teal-100"
             />
             <button
               type="submit"
               disabled={busy}
-              className="h-12 rounded-xl bg-teal-600 font-semibold text-white active:bg-teal-700 disabled:opacity-50"
+              className="h-12 rounded-xl bg-gradient-to-r from-teal-600 to-emerald-500 font-semibold text-white active:from-teal-700 active:to-emerald-600 disabled:opacity-50"
             >
-              {mode === "signin" ? "Sign in" : "Create account"}
+              Use dev token
             </button>
           </form>
+        )}
+      </div>
 
-          <button
-            onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
-            className="text-sm text-teal-700"
-          >
-            {mode === "signin"
-              ? "New here? Create an account"
-              : "Already have an account? Sign in"}
-          </button>
-        </div>
-      ) : (
-        <form
-          className="flex flex-col gap-3"
-          onSubmit={(e) => {
-            e.preventDefault();
-            void submitDevToken();
-          }}
-        >
-          <p className="text-sm text-stone-500">
-            Supabase isn&apos;t configured (<code>NEXT_PUBLIC_SUPABASE_URL</code>), so paste a
-            backend-accepted JWT to test locally:
-          </p>
-          <textarea
-            required
-            rows={4}
-            placeholder="eyJhbGciOiJIUzI1NiIs..."
-            value={devToken}
-            onChange={(e) => setDevToken(e.target.value)}
-            className="rounded-xl border border-stone-300 bg-white p-3 font-mono text-xs"
-          />
-          <button
-            type="submit"
-            disabled={busy}
-            className="h-12 rounded-xl bg-teal-600 font-semibold text-white active:bg-teal-700 disabled:opacity-50"
-          >
-            Use dev token
-          </button>
-        </form>
-      )}
+      <p className="mt-6 text-center text-xs text-white/70">Made for families in Dhaka 🇧🇩</p>
     </main>
   );
 }
