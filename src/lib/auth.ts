@@ -21,7 +21,16 @@ function sessionToUser(session: Session) {
 /** Record the signed-in user in the backend `users` collection. The session
  *  is already set, so api.me() carries the token; failures are non-fatal. */
 function syncUserToBackend(): void {
-  void api.me().catch(() => {});
+  // The /me response carries the persisted walkthrough flag; fold it into the
+  // store so the menu walkthrough is driven by the user record, not the browser.
+  void api
+    .me()
+    .then((profile) => {
+      const store = useAppStore.getState();
+      store.setWalkthroughSeen(profile.walkthrough_seen ?? false);
+      store.setFamilyCoachmarkSeen(profile.family_coachmark_seen ?? false);
+    })
+    .catch(() => {});
 }
 
 /** Resolve the current session once on app start (Supabase or dev token). */

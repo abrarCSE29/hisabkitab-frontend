@@ -63,6 +63,9 @@ export interface AuthenticatedUser {
   role: string | null;
   name: string | null;
   avatar_url: string | null;
+  // From backend /me; undefined until that resolves.
+  walkthrough_seen?: boolean;
+  family_coachmark_seen?: boolean;
 }
 
 export interface VoucherCreatePayload {

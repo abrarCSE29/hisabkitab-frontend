@@ -16,8 +16,6 @@ import { applyVoucherFilters, countActiveFilters } from "@/lib/filters";
 import { isCurrentMonth, taka } from "@/lib/format";
 import { useAppStore } from "@/store/useAppStore";
 
-const COACHMARK_KEY = "hisabkitab-family-coachmark";
-
 function Dashboard() {
   const router = useRouter();
   const user = useAppStore((s) => s.user);
@@ -28,6 +26,7 @@ function Dashboard() {
   const setCategories = useAppStore((s) => s.setCategories);
   const setFamilies = useAppStore((s) => s.setFamilies);
   const setWorkspace = useAppStore((s) => s.setWorkspace);
+  const setFamilyCoachmarkSeen = useAppStore((s) => s.setFamilyCoachmarkSeen);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -103,18 +102,19 @@ function Dashboard() {
   }, [refresh]);
 
   // First-run nudge: once the feed has loaded, show the coachmark to users who
-  // have no families yet (and haven't dismissed it before).
+  // have no families yet and haven't dismissed it before (per-user flag from /me,
+  // so it follows the account across devices rather than living in localStorage).
   useEffect(() => {
     if (loading) return;
-    const seen = localStorage.getItem(COACHMARK_KEY) === "1";
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setCoachmark(!seen && families.length === 0);
-  }, [loading, families.length]);
+    setCoachmark(user?.family_coachmark_seen === false && families.length === 0);
+  }, [loading, families.length, user?.family_coachmark_seen]);
 
   const dismissCoachmark = useCallback(() => {
-    localStorage.setItem(COACHMARK_KEY, "1");
+    setFamilyCoachmarkSeen(true);
+    void api.markFamilyCoachmarkSeen().catch(() => {});
     setCoachmark(false);
-  }, []);
+  }, [setFamilyCoachmarkSeen]);
 
   const visibleVouchers = applyVoucherFilters(vouchers, filters);
   const activeFilterCount = countActiveFilters(filters);

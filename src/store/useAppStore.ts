@@ -15,6 +15,8 @@ interface AppState {
   setSession: (token: string, user: AuthenticatedUser) => void;
   clearSession: () => void;
   markAuthReady: () => void;
+  setWalkthroughSeen: (seen: boolean) => void;
+  setFamilyCoachmarkSeen: (seen: boolean) => void;
 
   // Workspace (solo vs family) — persisted across visits
   workspace: Workspace;
@@ -52,6 +54,14 @@ export const useAppStore = create<AppState>()(
       clearSession: () =>
         set({ accessToken: null, user: null, workspace: { mode: "solo" }, vouchers: [] }),
       markAuthReady: () => set({ authReady: true }),
+      setWalkthroughSeen: (seen) =>
+        set((state) => ({
+          user: state.user ? { ...state.user, walkthrough_seen: seen } : state.user,
+        })),
+      setFamilyCoachmarkSeen: (seen) =>
+        set((state) => ({
+          user: state.user ? { ...state.user, family_coachmark_seen: seen } : state.user,
+        })),
 
       workspace: { mode: "solo" },
       // Member filters don't carry meaning across workspaces — reset on switch.

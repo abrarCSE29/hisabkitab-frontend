@@ -56,6 +56,12 @@ async function request<T>(
 export const api = {
   me: (token?: string) => request<AuthenticatedUser>("/auth/me", { token }),
 
+  markWalkthroughSeen: () =>
+    request<null>("/auth/walkthrough-seen", { method: "POST" }),
+
+  markFamilyCoachmarkSeen: () =>
+    request<null>("/auth/family-coachmark-seen", { method: "POST" }),
+
   categories: (type?: VoucherType, familyId?: string) => {
     const q = new URLSearchParams();
     if (type) q.set("type", type);

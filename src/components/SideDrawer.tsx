@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ChartColumn, Download, Home, LogOut, Tags, UsersRound, X } from "lucide-react";
+import { api } from "@/lib/api";
 import { logout } from "@/lib/auth";
 import { useAppStore } from "@/store/useAppStore";
 
@@ -19,10 +20,9 @@ const navLinks = [
   { href: "/family", icon: UsersRound, label: "Family space", desc: "Track a shared budget together." },
 ];
 
-const TOUR_KEY = "hisabkitab-menu-walkthrough";
-
 export default function SideDrawer({ open, onClose }: SideDrawerProps) {
   const user = useAppStore((s) => s.user);
+  const setWalkthroughSeen = useAppStore((s) => s.setWalkthroughSeen);
   // null = no walkthrough running; otherwise the current step index.
   const [tourStep, setTourStep] = useState<number | null>(null);
   const [anchorTop, setAnchorTop] = useState(0);
@@ -42,18 +42,20 @@ export default function SideDrawer({ open, onClose }: SideDrawerProps) {
   }, [open, onClose]);
 
   // First time the menu is opened, run a short guided walkthrough of its items.
+  // Gated on the per-user flag from the backend (not localStorage), so it shows
+  // once per account regardless of device/browser. `=== false` waits until /me
+  // has resolved the flag before deciding.
   useEffect(() => {
-    // One-shot: reset on close, start the tour the first time it's opened.
     /* eslint-disable react-hooks/set-state-in-effect */
     if (!open) {
       setTourStep(null);
       return;
     }
-    if (localStorage.getItem(TOUR_KEY) !== "1") {
+    if (user?.walkthrough_seen === false) {
       setTourStep(0);
     }
     /* eslint-enable react-hooks/set-state-in-effect */
-  }, [open]);
+  }, [open, user?.walkthrough_seen]);
 
   // Align the side callout to the highlighted item's vertical position.
   useEffect(() => {
@@ -62,16 +64,23 @@ export default function SideDrawer({ open, onClose }: SideDrawerProps) {
     if (el) setAnchorTop(el.getBoundingClientRect().top);
   }, [tourStep, open]);
 
+  // Persist "seen" to the user record (and reflect it locally) so it never
+  // shows again, on any device.
+  const finishTour = () => {
+    setWalkthroughSeen(true);
+    void api.markWalkthroughSeen().catch(() => {});
+  };
+
   const endTour = () => {
-    localStorage.setItem(TOUR_KEY, "1");
     setTourStep(null);
+    finishTour();
   };
 
   const nextStep = () => {
     setTourStep((s) => {
       if (s === null) return null;
       if (s >= navLinks.length - 1) {
-        localStorage.setItem(TOUR_KEY, "1");
+        finishTour();
         return null;
       }
       return s + 1;
