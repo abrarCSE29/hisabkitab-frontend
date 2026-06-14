@@ -58,6 +58,7 @@ export interface AuthenticatedUser {
 export interface VoucherCreatePayload {
   type: VoucherType;
   heading?: string | null;
+  entry_date?: string | null; // "YYYY-MM-DD"; omitted/null => today
   category_id?: string | null;
   items: { name?: string; amount: number }[];
   image_url?: string | null;

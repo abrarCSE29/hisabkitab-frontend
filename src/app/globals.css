@@ -22,6 +22,18 @@
   animation: pulse-ring 1.6s ease-out infinite;
 }
 
+/* Recharts focuses the SVG surface and sectors/bars on tap, which the browser
+   paints as a thick black outline. Suppress it — the tooltip is the feedback. */
+.recharts-wrapper,
+.recharts-surface,
+.recharts-wrapper svg,
+.recharts-sector,
+.recharts-rectangle,
+.recharts-pie-sector,
+.recharts-bar-rectangle {
+  outline: none !important;
+}
+
 /* Receipt scanning beam — sweeps over the image while OCR runs */
 @keyframes scan {
   0% {

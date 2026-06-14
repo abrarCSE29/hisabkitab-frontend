@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Camera, ImagePlus, Plus, Sparkles, ThumbsDown, ThumbsUp, X } from "lucide-react";
+import { CalendarDays, Camera, ImagePlus, Plus, Sparkles, ThumbsDown, ThumbsUp, X } from "lucide-react";
 import { api } from "@/lib/api";
 import { categoryColor, categoryEmoji } from "@/lib/categoryMeta";
+import { dateInputValue } from "@/lib/format";
 import { uploadReceipt } from "@/lib/receipts";
 import { supabase } from "@/lib/supabase";
 import type { Voucher, VoucherType, VoucherUpdatePayload } from "@/lib/types";
@@ -30,6 +31,8 @@ export default function VoucherForm({ initial, submitLabel, onSubmit }: VoucherF
 
   const [type, setType] = useState<VoucherType>(initial?.type ?? "expense");
   const [heading, setHeading] = useState(initial?.heading ?? "");
+  // Defaults to the existing entry's date when editing, otherwise today.
+  const [entryDate, setEntryDate] = useState(() => dateInputValue(initial?.created_at));
   const [categoryId, setCategoryId] = useState<string | null>(initial?.category_id ?? null);
   const [items, setItems] = useState<ItemRow[]>(
     initial?.items.map((item) => ({ name: item.name, amount: String(item.amount) })) ?? [
@@ -114,6 +117,7 @@ export default function VoucherForm({ initial, submitLabel, onSubmit }: VoucherF
       await onSubmit({
         type,
         heading: heading.trim() || null,
+        entry_date: entryDate || null,
         category_id: categoryId,
         items: parsedItems,
         image_url: imageUrl,
@@ -160,6 +164,19 @@ export default function VoucherForm({ initial, submitLabel, onSubmit }: VoucherF
         maxLength={200}
         className="w-full rounded-xl border border-stone-200 bg-white px-4 py-3 text-center text-base font-semibold text-stone-900 outline-none placeholder:font-normal placeholder:text-stone-400 focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
       />
+
+      {/* Date — defaults to today; tap to back-date the entry */}
+      <label className="flex items-center gap-2.5 rounded-xl border border-stone-200 bg-white px-3.5 py-2.5">
+        <CalendarDays className="h-4 w-4 shrink-0 text-stone-400" strokeWidth={2} />
+        <span className="text-sm font-medium text-stone-500">Date</span>
+        <input
+          type="date"
+          value={entryDate}
+          max={dateInputValue()}
+          onChange={(e) => setEntryDate(e.target.value)}
+          className="ml-auto bg-transparent text-sm font-semibold text-stone-800 outline-none"
+        />
+      </label>
 
       {/* Type toggle — compact, out of the way */}
       <div className="mx-auto grid w-60 grid-cols-2 rounded-full bg-stone-200 p-1 text-sm font-semibold">

@@ -69,6 +69,15 @@ export const api = {
   stats: (familyId?: string) =>
     request<VoucherStats>(`/vouchers/stats${familyId ? `?family_id=${familyId}` : ""}`),
 
+  exportVouchers: (params: { familyId?: string; start?: string; end?: string }) => {
+    const q = new URLSearchParams();
+    if (params.familyId) q.set("family_id", params.familyId);
+    if (params.start) q.set("start", params.start);
+    if (params.end) q.set("end", params.end);
+    const qs = q.toString();
+    return request<Voucher[]>(`/vouchers/export${qs ? `?${qs}` : ""}`);
+  },
+
   voucher: (id: string) => request<Voucher>(`/vouchers/${id}`),
 
   updateVoucher: (id: string, payload: VoucherUpdatePayload) =>

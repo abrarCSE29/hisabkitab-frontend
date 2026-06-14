@@ -19,6 +19,14 @@ export function voucherDate(iso: string): string {
   return date.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
 }
 
+// "YYYY-MM-DD" in local time for <input type="date">. No arg => today.
+export function dateInputValue(iso?: string): string {
+  const d = iso ? parseIso(iso) : new Date();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${d.getFullYear()}-${month}-${day}`;
+}
+
 export function isCurrentMonth(iso: string): boolean {
   const date = parseIso(iso);
   const now = new Date();

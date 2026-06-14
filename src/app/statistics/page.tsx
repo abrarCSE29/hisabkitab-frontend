@@ -204,16 +204,16 @@ function StatsView() {
             {donut.length > 0 && (
               <Card>
                 <SectionTitle>Where it went · {stats.month_label}</SectionTitle>
-                <div className="flex items-center gap-3">
-                  <div className="relative h-40 w-40 shrink-0">
+                <div className="flex flex-col items-center gap-4">
+                  <div className="relative mx-auto h-60 w-full max-w-[16rem]">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
                           data={donut}
                           dataKey="value"
                           nameKey="label"
-                          innerRadius={48}
-                          outerRadius={72}
+                          innerRadius="58%"
+                          outerRadius="88%"
                           paddingAngle={2}
                           stroke="none"
                         >
@@ -228,11 +228,13 @@ function StatsView() {
                       </PieChart>
                     </ResponsiveContainer>
                     <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-                      <span className="text-[10px] font-medium uppercase text-stone-400">Total</span>
-                      <span className="text-sm font-bold text-stone-900">{taka(stats.month.spent)}</span>
+                      <span className="text-[11px] font-medium uppercase text-stone-400">Total</span>
+                      <span className="text-lg font-extrabold text-stone-900">
+                        {taka(stats.month.spent)}
+                      </span>
                     </div>
                   </div>
-                  <ul className="flex min-w-0 flex-1 flex-col gap-1.5">
+                  <ul className="grid w-full grid-cols-2 gap-x-4 gap-y-2">
                     {donut.map((slice) => {
                       const pct = stats.month.spent > 0 ? (slice.value / stats.month.spent) * 100 : 0;
                       return (
@@ -374,6 +376,23 @@ function StatsView() {
   );
 }
 
+// Five discrete spending levels: 0 = nothing, 1–4 = light→dark teal. Stepped
+// (rather than a smooth gradient) so neighbouring days read as clearly different.
+const LEVEL_BG = ["#f5f5f4", "#99f6e4", "#2dd4bf", "#0d9488", "#115e59"];
+const LEVEL_TEXT = [
+  "text-stone-400",
+  "text-stone-700",
+  "text-stone-800",
+  "text-white",
+  "text-white",
+];
+
+// total === 0 -> level 0; otherwise quartile of the busiest day -> level 1..4.
+function spendLevel(total: number, max: number): number {
+  if (total <= 0) return 0;
+  return 1 + Math.min(3, Math.floor((total / max) * 4));
+}
+
 // Calendar heatmap: a 7-col grid (Sat→Fri) where darker = spent more that day.
 function Heatmap({ stats }: { stats: VoucherStats }) {
   const now = new Date();
@@ -393,25 +412,34 @@ function Heatmap({ stats }: { stats: VoucherStats }) {
           <span key={`b${i}`} />
         ))}
         {stats.by_day.map((d) => {
-          const ratio = d.total / max;
+          const level = spendLevel(d.total, max);
           const isToday = d.day === stats.today;
           return (
             <div
               key={d.day}
               title={d.total > 0 ? `${d.day}: ${taka(d.total)}` : `${d.day}: —`}
-              className={`flex aspect-square items-center justify-center rounded-md text-[10px] font-medium ${
-                isToday ? "ring-2 ring-teal-500" : ""
-              } ${d.total === 0 ? "bg-stone-100 text-stone-400" : "text-white"}`}
-              style={
-                d.total > 0
-                  ? { backgroundColor: `rgba(13, 148, 136, ${0.25 + ratio * 0.75})` }
-                  : undefined
-              }
+              className={`flex aspect-square items-center justify-center rounded-md text-[10px] font-medium ${LEVEL_TEXT[level]} ${
+                isToday ? "ring-2 ring-teal-600" : ""
+              }`}
+              style={{ backgroundColor: LEVEL_BG[level] }}
             >
               {d.day}
             </div>
           );
         })}
+      </div>
+
+      {/* Legend so the colour scale is self-explanatory */}
+      <div className="mt-3 flex items-center justify-end gap-1.5 text-[10px] font-medium text-stone-400">
+        <span>Less</span>
+        {LEVEL_BG.map((bg) => (
+          <span
+            key={bg}
+            className="h-3 w-3 rounded-sm ring-1 ring-inset ring-stone-200"
+            style={{ backgroundColor: bg }}
+          />
+        ))}
+        <span>More</span>
       </div>
     </div>
   );
