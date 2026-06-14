@@ -29,6 +29,7 @@ export default function VoucherForm({ initial, submitLabel, onSubmit }: VoucherF
   const setCategories = useAppStore((s) => s.setCategories);
 
   const [type, setType] = useState<VoucherType>(initial?.type ?? "expense");
+  const [heading, setHeading] = useState(initial?.heading ?? "");
   const [categoryId, setCategoryId] = useState<string | null>(initial?.category_id ?? null);
   const [items, setItems] = useState<ItemRow[]>(
     initial?.items.map((item) => ({ name: item.name, amount: String(item.amount) })) ?? [
@@ -112,6 +113,7 @@ export default function VoucherForm({ initial, submitLabel, onSubmit }: VoucherF
     try {
       await onSubmit({
         type,
+        heading: heading.trim() || null,
         category_id: categoryId,
         items: parsedItems,
         image_url: imageUrl,
@@ -149,6 +151,15 @@ export default function VoucherForm({ initial, submitLabel, onSubmit }: VoucherF
           </div>
         </div>
       )}
+
+      {/* Heading — optional title; the feed falls back to the category name */}
+      <input
+        value={heading}
+        onChange={(e) => setHeading(e.target.value)}
+        placeholder="Title (optional)"
+        maxLength={200}
+        className="w-full rounded-xl border border-stone-200 bg-white px-4 py-3 text-center text-base font-semibold text-stone-900 outline-none placeholder:font-normal placeholder:text-stone-400 focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
+      />
 
       {/* Type toggle — compact, out of the way */}
       <div className="mx-auto grid w-60 grid-cols-2 rounded-full bg-stone-200 p-1 text-sm font-semibold">

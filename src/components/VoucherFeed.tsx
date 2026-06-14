@@ -87,7 +87,10 @@ export default function VoucherFeed({ vouchers }: { vouchers: Voucher[] }) {
                 </span>
                 <div className="flex min-w-0 flex-1 flex-col">
                   <span className="truncate text-sm font-semibold text-stone-900">
-                    {category?.label ?? voucher.category_id ?? "Uncategorized"}
+                    {voucher.heading?.trim() ||
+                      category?.label ||
+                      voucher.category_id ||
+                      "Uncategorized"}
                   </span>
                   <span className="flex items-center gap-1 truncate text-xs text-stone-500">
                     <span className="truncate">{itemsSummary(voucher)}</span>

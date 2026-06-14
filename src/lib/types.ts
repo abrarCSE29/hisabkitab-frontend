@@ -22,6 +22,7 @@ export interface Voucher {
   user_email: string | null;
   user_name: string | null;
   type: VoucherType;
+  heading: string | null;
   category_id: string | null;
   items: VoucherItem[];
   voucher_total: number;
@@ -56,6 +57,7 @@ export interface AuthenticatedUser {
 
 export interface VoucherCreatePayload {
   type: VoucherType;
+  heading?: string | null;
   category_id?: string | null;
   items: { name?: string; amount: number }[];
   image_url?: string | null;

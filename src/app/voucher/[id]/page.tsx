@@ -31,7 +31,10 @@ function ReadOnlyVoucher({ voucher }: { voucher: Voucher }) {
           </span>
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-semibold text-stone-900">
-              {category?.label ?? voucher.category_id ?? "Uncategorized"}
+              {voucher.heading?.trim() ||
+                category?.label ||
+                voucher.category_id ||
+                "Uncategorized"}
             </p>
             <p className="truncate text-xs text-stone-500">
               by {voucher.user_name ?? voucher.user_email ?? "family member"} ·{" "}

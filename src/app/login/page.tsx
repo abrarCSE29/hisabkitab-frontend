@@ -273,7 +273,7 @@ export default function LoginPage() {
         )}
       </div>
 
-      <p className="mt-6 text-center text-xs text-white/70">Made for families in Dhaka 🇧🇩</p>
+      <p className="mt-6 text-center text-xs text-white/70">Made for families 🇧🇩</p>
 
       {/* Confirmation-email-sent popup */}
       <Modal

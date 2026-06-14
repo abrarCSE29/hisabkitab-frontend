@@ -53,21 +53,28 @@ function Dashboard() {
   }, [carouselPaused, activeCard]);
 
   const refresh = useCallback(async () => {
+    const familyId = workspace.mode === "family" ? workspace.familyId : undefined;
+
+    // Secondary data — feeds the add-form (categories) and workspace switcher
+    // (families), not the main list. Load it in the background so a slow/cold
+    // call here never holds the feed hostage, and a failure never blanks it.
+    void Promise.all([api.categories(), api.families()])
+      .then(([categories, families]) => {
+        setCategories(categories);
+        setFamilies(families);
+        // The persisted family workspace may no longer exist / be accessible.
+        if (familyId && !families.some((f) => f._id === familyId)) {
+          setWorkspace({ mode: "solo" });
+        }
+      })
+      .catch(() => {});
+
+    // The feed is the main content — render it the moment it arrives, gated only
+    // on its own request rather than the slowest of three (Promise.all).
     try {
-      const familyId = workspace.mode === "family" ? workspace.familyId : undefined;
-      const [categories, families, feed] = await Promise.all([
-        api.categories(),
-        api.families(),
-        api.vouchers(familyId),
-      ]);
+      const feed = await api.vouchers(familyId);
       setError(null);
-      setCategories(categories);
-      setFamilies(families);
       setVouchers(feed);
-      // The persisted family workspace may no longer exist / be accessible.
-      if (familyId && !families.some((f) => f._id === familyId)) {
-        setWorkspace({ mode: "solo" });
-      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load");
     } finally {
