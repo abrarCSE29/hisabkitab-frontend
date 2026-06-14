@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
-import { ChartColumn, Download, LogOut, UsersRound, X } from "lucide-react";
+import { ChartColumn, Download, Home, LogOut, UsersRound, X } from "lucide-react";
 import { logout } from "@/lib/auth";
 import { useAppStore } from "@/store/useAppStore";
 
@@ -12,6 +12,7 @@ interface SideDrawerProps {
 }
 
 const navLinks = [
+  { href: "/dashboard", icon: Home, label: "Home" },
   { href: "/statistics", icon: ChartColumn, label: "Financial statistics" },
   { href: "/export", icon: Download, label: "Export data" },
   { href: "/family", icon: UsersRound, label: "Family space" },

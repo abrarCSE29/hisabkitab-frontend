@@ -45,7 +45,8 @@ const s = StyleSheet.create({
   title: { fontSize: 22, fontWeight: 700, color: INK, marginTop: 4 },
   accentRule: { height: 2, backgroundColor: TEAL, marginTop: 8, marginBottom: 12, width: 54 },
 
-  metaGrid: { flexDirection: "row", flexWrap: "wrap", marginBottom: 20 },
+  metaGrid: { flexDirection: "row", flexWrap: "wrap", marginBottom: 12 },
+  headerDivider: { height: 1, backgroundColor: LINE, marginBottom: 18 },
   metaItem: { width: "50%", marginBottom: 8 },
   metaLabel: { fontSize: 8, color: FAINT, textTransform: "uppercase", letterSpacing: 0.5 },
   metaValue: { fontSize: 10, fontWeight: 700, color: INK, marginTop: 1 },
@@ -154,6 +155,7 @@ function Header({ meta }: { meta: ExportMeta }) {
           </Text>
         </View>
       </View>
+      <View style={s.headerDivider} />
     </View>
   );
 }

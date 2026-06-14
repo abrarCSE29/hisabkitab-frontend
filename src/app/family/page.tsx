@@ -6,7 +6,6 @@ import {
   ChevronRight,
   Copy,
   KeyRound,
-  Menu,
   Plus,
   RefreshCw,
   Share2,
@@ -14,11 +13,10 @@ import {
   UserRound,
   UsersRound,
 } from "lucide-react";
-import AppBar from "@/components/AppBar";
+import AppBar, { BackButton } from "@/components/AppBar";
 import AuthGate from "@/components/AuthGate";
 import BottomNav from "@/components/BottomNav";
 import Modal from "@/components/Modal";
-import SideDrawer from "@/components/SideDrawer";
 import { api } from "@/lib/api";
 import { copyToClipboard } from "@/lib/clipboard";
 import type { Family, FamilyMember } from "@/lib/types";
@@ -103,7 +101,6 @@ function FamilyScreen() {
   const [newName, setNewName] = useState("");
   const [joinCode, setJoinCode] = useState("");
   const [busy, setBusy] = useState(false);
-  const [drawerOpen, setDrawerOpen] = useState(false);
   const [detailId, setDetailId] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [joinOpen, setJoinOpen] = useState(false);
@@ -227,18 +224,8 @@ function FamilyScreen() {
       <AppBar
         title="Family space"
         subtitle="Shared khata with your household"
-        leading={
-          <button
-            onClick={() => setDrawerOpen(true)}
-            aria-label="Open menu"
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white active:bg-white/20"
-          >
-            <Menu className="h-5 w-5" strokeWidth={2.25} />
-          </button>
-        }
+        leading={<BackButton />}
       />
-
-      <SideDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
 
       <div className="flex flex-col gap-6 px-4 pt-5">
         {message && !detailId && !createOpen && !joinOpen && <MessageBanner message={message} />}
