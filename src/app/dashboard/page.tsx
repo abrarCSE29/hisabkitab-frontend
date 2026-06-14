@@ -29,6 +29,7 @@ function Dashboard() {
   const setFamilies = useAppStore((s) => s.setFamilies);
   const setWorkspace = useAppStore((s) => s.setWorkspace);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeCard, setActiveCard] = useState(0);
   const [carouselPaused, setCarouselPaused] = useState(false);
@@ -85,10 +86,20 @@ function Dashboard() {
   useEffect(() => {
     // Runs on mount and whenever the workspace changes (refresh is rebuilt then),
     // so show the loading skeleton for switches too — not just the first load.
-    // The manual refresh button calls refresh() directly and stays subtle.
+    // The manual refresh button calls handleRefresh() and stays subtle (no skeleton).
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     void refresh();
+  }, [refresh]);
+
+  // Manual refresh: spin the icon (but keep the existing list, no skeleton).
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await refresh();
+    } finally {
+      setRefreshing(false);
+    }
   }, [refresh]);
 
   // First-run nudge: once the feed has loaded, show the coachmark to users who
@@ -286,11 +297,12 @@ function Dashboard() {
               )}
             </h2>
             <button
-              onClick={() => void refresh()}
+              onClick={() => void handleRefresh()}
+              disabled={loading || refreshing}
               aria-label="Refresh entries"
-              className="flex h-9 w-9 items-center justify-center rounded-full text-stone-500 active:bg-stone-100"
+              className="flex h-9 w-9 items-center justify-center rounded-full text-stone-500 active:bg-stone-100 disabled:opacity-60"
             >
-              <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+              <RefreshCw className={`h-4 w-4 ${loading || refreshing ? "animate-spin" : ""}`} />
             </button>
           </div>
 

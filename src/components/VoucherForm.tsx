@@ -90,7 +90,10 @@ export default function VoucherForm({ initial, submitLabel, onSubmit, familyId }
     }
   }
 
-  const typeCategories = categories.filter((c) => c.type === type);
+  // Selected category floats to the front so it's always visible without scrolling.
+  const typeCategories = categories
+    .filter((c) => c.type === type)
+    .sort((a, b) => (a.id === categoryId ? -1 : b.id === categoryId ? 1 : 0));
   const parsedItems = items
     .map((row) => ({ name: row.name.trim(), amount: parseFloat(row.amount) }))
     .filter((row) => !Number.isNaN(row.amount) && row.amount > 0);
@@ -266,7 +269,7 @@ export default function VoucherForm({ initial, submitLabel, onSubmit, familyId }
       )}
 
       {items.length === 1 ? (
-        /* HERO: single quick entry — amount + item name are the stage */
+        /* HERO: single quick entry — the amount is the stage */
         <section className="flex flex-col items-center gap-2">
           <div className="flex w-full items-center justify-center gap-1 px-4">
             <span
@@ -292,12 +295,6 @@ export default function VoucherForm({ initial, submitLabel, onSubmit, familyId }
             {/* mirror the ৳ width so the digits stay visually centered */}
             <span className="w-[1ch] shrink-0 text-3xl font-semibold text-transparent">৳</span>
           </div>
-          <input
-            placeholder="কীসের জন্য? (optional)"
-            value={items[0]?.name ?? ""}
-            onChange={(e) => updateItem(0, { name: e.target.value })}
-            className="h-10 w-64 rounded-full bg-white px-4 text-center text-sm text-stone-700 outline-none ring-1 ring-stone-200 placeholder:text-stone-400 focus:ring-teal-400"
-          />
         </section>
       ) : (
         /* LIST: multiple items — the big view collapses into uniform rows */

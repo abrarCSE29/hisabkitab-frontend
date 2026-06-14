@@ -23,14 +23,12 @@
 }
 
 /* Recharts focuses the SVG surface and sectors/bars on tap, which the browser
-   paints as a thick black outline. Suppress it — the tooltip is the feedback. */
+   paints as a thick black outline. Suppress it on the wrapper and every element
+   inside (incl. the focused <path>/<rect>) — the tooltip is the feedback. */
 .recharts-wrapper,
-.recharts-surface,
-.recharts-wrapper svg,
-.recharts-sector,
-.recharts-rectangle,
-.recharts-pie-sector,
-.recharts-bar-rectangle {
+.recharts-wrapper *,
+.recharts-wrapper *:focus,
+.recharts-wrapper *:focus-visible {
   outline: none !important;
 }
 
