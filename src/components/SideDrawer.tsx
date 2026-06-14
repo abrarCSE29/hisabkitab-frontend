@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ChartColumn, Download, Home, LogOut, Tags, UsersRound, X } from "lucide-react";
 import { logout } from "@/lib/auth";
@@ -12,11 +12,11 @@ interface SideDrawerProps {
 }
 
 const navLinks = [
-  { href: "/dashboard", icon: Home, label: "Home", desc: "Your dashboard — monthly totals and your latest entries." },
-  { href: "/statistics", icon: ChartColumn, label: "Financial statistics", desc: "Charts of where your money goes: trends, categories and more." },
-  { href: "/categories", icon: Tags, label: "Manage categories", desc: "Create your own categories with a custom icon and colour." },
-  { href: "/export", icon: Download, label: "Export data", desc: "Download your entries for any date range as CSV or a PDF report." },
-  { href: "/family", icon: UsersRound, label: "Family space", desc: "Create or join a family to track a shared budget together." },
+  { href: "/dashboard", icon: Home, label: "Home", desc: "Totals and your latest entries." },
+  { href: "/statistics", icon: ChartColumn, label: "Financial statistics", desc: "Charts of where your money goes." },
+  { href: "/categories", icon: Tags, label: "Manage categories", desc: "Add your own icons & colours." },
+  { href: "/export", icon: Download, label: "Export data", desc: "Download a CSV or PDF report." },
+  { href: "/family", icon: UsersRound, label: "Family space", desc: "Track a shared budget together." },
 ];
 
 const TOUR_KEY = "hisabkitab-menu-walkthrough";
@@ -25,6 +25,8 @@ export default function SideDrawer({ open, onClose }: SideDrawerProps) {
   const user = useAppStore((s) => s.user);
   // null = no walkthrough running; otherwise the current step index.
   const [tourStep, setTourStep] = useState<number | null>(null);
+  const [anchorTop, setAnchorTop] = useState(0);
+  const itemRefs = useRef<(HTMLAnchorElement | null)[]>([]);
   const touring = tourStep !== null;
 
   // Lock background scroll and allow Esc to close while open.
@@ -52,6 +54,13 @@ export default function SideDrawer({ open, onClose }: SideDrawerProps) {
     }
     /* eslint-enable react-hooks/set-state-in-effect */
   }, [open]);
+
+  // Align the side callout to the highlighted item's vertical position.
+  useEffect(() => {
+    if (tourStep === null) return;
+    const el = itemRefs.current[tourStep];
+    if (el) setAnchorTop(el.getBoundingClientRect().top);
+  }, [tourStep, open]);
 
   const endTour = () => {
     localStorage.setItem(TOUR_KEY, "1");
@@ -82,13 +91,14 @@ export default function SideDrawer({ open, onClose }: SideDrawerProps) {
         }`}
       />
 
-      {/* Drawer panel — floats in from the left */}
+      {/* Drawer panel — floats in from the left. Narrows during the tour so the
+          side callout has room to sit beside the highlighted item. */}
       <aside
         role="dialog"
         aria-label="Menu"
-        className={`fixed inset-y-0 left-0 z-40 flex w-72 max-w-[82%] flex-col bg-white shadow-2xl transition-transform duration-300 ease-out ${
-          open ? "translate-x-0" : "-translate-x-full"
-        }`}
+        className={`fixed inset-y-0 left-0 z-40 flex max-w-[68%] flex-col bg-white shadow-2xl transition-[transform,width] duration-300 ease-out ${
+          touring ? "w-60" : "w-72"
+        } ${open ? "translate-x-0" : "-translate-x-full"}`}
       >
         <div className="flex h-14 items-center justify-between border-b border-stone-100 px-4">
           <span className="text-lg font-bold text-teal-700">হিসাবকিতাব</span>
@@ -109,6 +119,9 @@ export default function SideDrawer({ open, onClose }: SideDrawerProps) {
               <Link
                 key={link.href}
                 href={link.href}
+                ref={(el) => {
+                  itemRefs.current[i] = el;
+                }}
                 onClick={onClose}
                 aria-hidden={touring}
                 tabIndex={touring ? -1 : undefined}
@@ -122,8 +135,8 @@ export default function SideDrawer({ open, onClose }: SideDrawerProps) {
                       : "text-stone-700"
                 }`}
               >
-                <Icon className="h-[18px] w-[18px]" strokeWidth={2} />
-                {link.label}
+                <Icon className="h-[18px] w-[18px] shrink-0" strokeWidth={2} />
+                <span className="truncate">{link.label}</span>
               </Link>
             );
           })}
@@ -158,50 +171,52 @@ export default function SideDrawer({ open, onClose }: SideDrawerProps) {
             <LogOut className="h-4 w-4" strokeWidth={2.25} /> Sign out
           </button>
         </div>
+      </aside>
 
-        {/* Walkthrough callout — explains each item, one step at a time */}
-        {current && (
-          <div className="absolute inset-x-3 bottom-3 z-10 rounded-2xl bg-white p-4 shadow-2xl shadow-stone-900/30 ring-1 ring-stone-200">
-            <div className="flex items-start gap-3">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-teal-500 to-emerald-500 text-white">
-                <current.icon className="h-[18px] w-[18px]" strokeWidth={2.25} />
-              </span>
-              <div className="min-w-0">
-                <p className="text-sm font-bold text-stone-900">{current.label}</p>
-                <p className="mt-0.5 text-[13px] leading-snug text-stone-500">{current.desc}</p>
-              </div>
-            </div>
+      {/* Walkthrough callout — sits to the RIGHT of the highlighted item and
+          points back at it, so the two read as a pair. */}
+      {current && (
+        <div
+          className="fixed left-60 right-2 z-50 transition-[top] duration-200"
+          style={{ top: anchorTop }}
+        >
+          <div className="relative rounded-2xl bg-white p-3 shadow-2xl shadow-stone-900/40 ring-1 ring-stone-200">
+            {/* arrow pointing left at the item */}
+            <div className="absolute -left-1.5 top-4 h-3 w-3 rotate-45 rounded-sm bg-white ring-1 ring-stone-200" />
+            <div className="relative">
+              <p className="text-[13px] font-bold text-stone-900">{current.label}</p>
+              <p className="mt-0.5 text-[11px] leading-snug text-stone-500">{current.desc}</p>
 
-            <div className="mt-3 flex items-center justify-between">
-              {/* Step dots */}
-              <div className="flex items-center gap-1.5">
-                {navLinks.map((l, i) => (
-                  <span
-                    key={l.href}
-                    className={`h-1.5 rounded-full transition-all ${
-                      i === tourStep ? "w-4 bg-teal-600" : "w-1.5 bg-stone-300"
-                    }`}
-                  />
-                ))}
-              </div>
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={endTour}
-                  className="rounded-lg px-2.5 py-1.5 text-xs font-semibold text-stone-400 active:bg-stone-100"
-                >
-                  Skip
-                </button>
-                <button
-                  onClick={nextStep}
-                  className="rounded-lg bg-gradient-to-r from-teal-600 to-emerald-500 px-4 py-1.5 text-xs font-bold text-white active:from-teal-700"
-                >
-                  {tourStep === navLinks.length - 1 ? "Done" : "Next"}
-                </button>
+              <div className="mt-2.5 flex items-center justify-between">
+                <div className="flex items-center gap-1">
+                  {navLinks.map((l, i) => (
+                    <span
+                      key={l.href}
+                      className={`h-1 rounded-full transition-all ${
+                        i === tourStep ? "w-3 bg-teal-600" : "w-1 bg-stone-300"
+                      }`}
+                    />
+                  ))}
+                </div>
+                <div className="flex items-center gap-0.5">
+                  <button
+                    onClick={endTour}
+                    className="rounded-md px-1.5 py-1 text-[11px] font-semibold text-stone-400 active:bg-stone-100"
+                  >
+                    Skip
+                  </button>
+                  <button
+                    onClick={nextStep}
+                    className="rounded-md bg-gradient-to-r from-teal-600 to-emerald-500 px-3 py-1 text-[11px] font-bold text-white active:from-teal-700"
+                  >
+                    {tourStep === navLinks.length - 1 ? "Done" : "Next"}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        )}
-      </aside>
+        </div>
+      )}
     </>
   );
 }
