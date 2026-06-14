@@ -68,6 +68,7 @@ function ExportView() {
   const workspace = useAppStore((s) => s.workspace);
   const categories = useAppStore((s) => s.categories);
   const setCategories = useAppStore((s) => s.setCategories);
+  const user = useAppStore((s) => s.user);
 
   const templates = useMemo(() => buildTemplates(), []);
   const [start, setStart] = useState(templates[2].start); // default: last month
@@ -116,7 +117,13 @@ function ExportView() {
     return { spent, earned };
   }, [rows]);
 
-  const meta: ExportMeta = { workspace: workspaceName, isFamily: workspace.mode === "family", start, end };
+  const meta: ExportMeta = {
+    workspace: workspaceName,
+    isFamily: workspace.mode === "family",
+    start,
+    end,
+    generatedBy: user?.name ?? user?.email ?? "—",
+  };
   const fileBase = `hisabkitab-${workspaceName.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${start}-to-${end}`;
 
   function downloadCsv() {

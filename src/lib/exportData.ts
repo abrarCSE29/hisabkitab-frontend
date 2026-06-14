@@ -18,6 +18,7 @@ export interface ExportMeta {
   isFamily: boolean;
   start: string; // "YYYY-MM-DD"
   end: string;
+  generatedBy: string;
 }
 
 function esc(value: string | number): string {
