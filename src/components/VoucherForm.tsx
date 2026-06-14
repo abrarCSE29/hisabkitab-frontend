@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { CalendarDays, Camera, ImagePlus, Plus, Sparkles, ThumbsDown, ThumbsUp, X } from "lucide-react";
+import { CalendarDays, Camera, Check, ImagePlus, Plus, Sparkles, ThumbsDown, ThumbsUp, X } from "lucide-react";
 import { api } from "@/lib/api";
-import { categoryColor, categoryEmoji } from "@/lib/categoryMeta";
+import { categoryTint, COLOR_CHOICES, EMOJI_CHOICES } from "@/lib/categoryMeta";
 import { dateInputValue } from "@/lib/format";
 import { uploadReceipt } from "@/lib/receipts";
 import { supabase } from "@/lib/supabase";
@@ -19,12 +19,15 @@ interface VoucherFormProps {
   initial?: Voucher; // when set, the form edits an existing voucher
   submitLabel: string;
   onSubmit: (payload: VoucherUpdatePayload) => Promise<void>;
+  // Workspace the entry is filed under — scopes which custom categories show
+  // and where a newly created one is saved. Undefined = personal.
+  familyId?: string;
 }
 
 const plainNumberInput =
   "[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none";
 
-export default function VoucherForm({ initial, submitLabel, onSubmit }: VoucherFormProps) {
+export default function VoucherForm({ initial, submitLabel, onSubmit, familyId }: VoucherFormProps) {
   const user = useAppStore((s) => s.user);
   const categories = useAppStore((s) => s.categories);
   const setCategories = useAppStore((s) => s.setCategories);
@@ -50,11 +53,42 @@ export default function VoucherForm({ initial, submitLabel, onSubmit }: VoucherF
   const cameraInput = useRef<HTMLInputElement>(null);
   const galleryInput = useRef<HTMLInputElement>(null);
 
+  // New-category sheet
+  const [catSheetOpen, setCatSheetOpen] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [newEmoji, setNewEmoji] = useState(EMOJI_CHOICES[0]);
+  const [newColor, setNewColor] = useState(COLOR_CHOICES[0]);
+  const [creatingCat, setCreatingCat] = useState(false);
+  const [catError, setCatError] = useState<string | null>(null);
+
   useEffect(() => {
-    if (categories.length === 0) {
-      api.categories().then(setCategories).catch(() => {});
+    // Load categories for this workspace so its custom ones appear in the picker.
+    api.categories(undefined, familyId).then(setCategories).catch(() => {});
+  }, [familyId, setCategories]);
+
+  async function createCategory() {
+    const name = newName.trim();
+    if (!name) {
+      setCatError("Enter a name");
+      return;
     }
-  }, [categories.length, setCategories]);
+    setCreatingCat(true);
+    setCatError(null);
+    try {
+      const created = await api.createCategory(
+        { name, type, emoji: newEmoji, color: newColor },
+        familyId,
+      );
+      setCategories([...categories, created]);
+      setCategoryId(created.id);
+      setCatSheetOpen(false);
+      setNewName("");
+    } catch (err) {
+      setCatError(err instanceof Error ? err.message : "Could not create category");
+    } finally {
+      setCreatingCat(false);
+    }
+  }
 
   const typeCategories = categories.filter((c) => c.type === type);
   const parsedItems = items
@@ -335,16 +369,31 @@ export default function VoucherForm({ initial, submitLabel, onSubmit }: VoucherF
                 }`}
               >
                 <span
-                  className={`flex h-9 w-9 items-center justify-center rounded-full text-xl leading-none ${
-                    active ? "bg-white/20" : categoryColor(category.id)
-                  }`}
+                  className="flex h-9 w-9 items-center justify-center rounded-full text-xl leading-none"
+                  style={active ? { backgroundColor: "rgba(255,255,255,0.2)" } : categoryTint(category.color)}
                 >
-                  {categoryEmoji(category.id)}
+                  {category.emoji}
                 </span>
-                <span className="text-[11px] font-medium leading-none">{category.name_bn}</span>
+                <span className="max-w-[4.5rem] truncate text-[11px] font-medium leading-none">
+                  {category.name_bn}
+                </span>
               </button>
             );
           })}
+          {/* Quick add */}
+          <button
+            type="button"
+            onClick={() => {
+              setCatError(null);
+              setCatSheetOpen(true);
+            }}
+            className="flex min-w-[4.5rem] shrink-0 flex-col items-center gap-1.5 rounded-2xl border border-dashed border-stone-300 px-2 py-2.5 text-teal-700 active:bg-stone-50"
+          >
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-teal-50 text-teal-600">
+              <Plus className="h-5 w-5" strokeWidth={2.25} />
+            </span>
+            <span className="text-[11px] font-medium leading-none">New</span>
+          </button>
         </div>
       </section>
 
@@ -455,6 +504,97 @@ export default function VoucherForm({ initial, submitLabel, onSubmit }: VoucherF
             className="h-11 rounded-xl text-sm font-medium text-stone-500 active:bg-stone-50"
           >
             Cancel
+          </button>
+        </div>
+      </div>
+
+      {/* New category sheet */}
+      <div
+        onClick={() => !creatingCat && setCatSheetOpen(false)}
+        aria-hidden
+        className={`fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px] transition-opacity duration-300 ${
+          catSheetOpen ? "opacity-100" : "pointer-events-none opacity-0"
+        }`}
+      />
+      <div
+        role="dialog"
+        aria-label="New category"
+        className={`fixed inset-x-0 bottom-0 z-50 mx-auto w-full max-w-md rounded-t-3xl bg-white p-4 pb-6 shadow-2xl transition-transform duration-300 ease-out ${
+          catSheetOpen ? "translate-y-0" : "translate-y-full"
+        }`}
+      >
+        <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-stone-200" />
+        <p className="px-1 pb-1 text-sm font-bold text-stone-900">
+          New {expense ? "expense" : "income"} category
+        </p>
+        <p className="px-1 pb-3 text-xs text-stone-400">
+          {familyId ? "Shared with your family" : "For your personal space"}
+        </p>
+
+        <input
+          value={newName}
+          onChange={(e) => setNewName(e.target.value)}
+          placeholder="Category name"
+          maxLength={40}
+          className="mb-3 h-11 w-full rounded-xl border border-stone-200 bg-stone-50 px-3.5 text-sm outline-none focus:border-teal-400 focus:bg-white"
+        />
+
+        <p className="px-1 pb-1.5 text-[11px] font-semibold uppercase tracking-wide text-stone-400">Icon</p>
+        <div className="no-scrollbar mb-3 flex max-h-20 flex-wrap gap-1.5 overflow-y-auto">
+          {EMOJI_CHOICES.map((em) => (
+            <button
+              key={em}
+              type="button"
+              onClick={() => setNewEmoji(em)}
+              className={`flex h-9 w-9 items-center justify-center rounded-lg text-lg ${
+                newEmoji === em ? "ring-2 ring-teal-500" : "bg-stone-50"
+              }`}
+            >
+              {em}
+            </button>
+          ))}
+        </div>
+
+        <p className="px-1 pb-1.5 text-[11px] font-semibold uppercase tracking-wide text-stone-400">Color</p>
+        <div className="mb-4 flex flex-wrap gap-2">
+          {COLOR_CHOICES.map((col) => (
+            <button
+              key={col}
+              type="button"
+              onClick={() => setNewColor(col)}
+              aria-label={`Color ${col}`}
+              className="flex h-8 w-8 items-center justify-center rounded-full"
+              style={{ backgroundColor: col }}
+            >
+              {newColor === col && <Check className="h-4 w-4 text-white" strokeWidth={3} />}
+            </button>
+          ))}
+        </div>
+
+        {catError && (
+          <p className="mb-3 rounded-lg bg-red-50 px-3.5 py-2.5 text-sm text-red-700">{catError}</p>
+        )}
+
+        <div className="flex gap-2.5">
+          <button
+            onClick={() => setCatSheetOpen(false)}
+            disabled={creatingCat}
+            className="h-12 flex-1 rounded-xl bg-stone-100 text-sm font-semibold text-stone-700 active:bg-stone-200 disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => void createCategory()}
+            disabled={creatingCat || !newName.trim()}
+            className="flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-teal-600 to-emerald-500 text-sm font-bold text-white shadow-md shadow-teal-600/25 active:from-teal-700 disabled:opacity-40"
+          >
+            <span
+              className="flex h-6 w-6 items-center justify-center rounded-full text-sm"
+              style={categoryTint(newColor)}
+            >
+              {newEmoji}
+            </span>
+            {creatingCat ? "Adding…" : "Add"}
           </button>
         </div>
       </div>

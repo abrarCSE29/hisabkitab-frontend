@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight, Paperclip } from "lucide-react";
-import { categoryColor, categoryEmoji } from "@/lib/categoryMeta";
+import { categoryTint, resolveCategory } from "@/lib/categoryMeta";
 import { parseIso, taka, voucherDate } from "@/lib/format";
 import type { Voucher } from "@/lib/types";
 import { useAppStore } from "@/store/useAppStore";
@@ -62,7 +62,7 @@ export default function VoucherFeed({ vouchers }: { vouchers: Voucher[] }) {
     <div className="flex h-full flex-col">
       <ul className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto">
         {pageItems.map((voucher, index) => {
-          const category = categories.find((c) => c.id === voucher.category_id);
+          const cat = resolveCategory(categories, voucher.category_id);
           const expense = voucher.type === "expense";
           const label = dayLabel(voucher.created_at);
           const showDivider =
@@ -79,18 +79,14 @@ export default function VoucherFeed({ vouchers }: { vouchers: Voucher[] }) {
                 className="flex items-center gap-3 rounded-2xl border border-stone-200 bg-white p-3 active:bg-stone-50"
               >
                 <span
-                  className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-xl ${categoryColor(
-                    voucher.category_id,
-                  )}`}
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-xl"
+                  style={categoryTint(cat.hex)}
                 >
-                  {categoryEmoji(voucher.category_id)}
+                  {cat.emoji}
                 </span>
                 <div className="flex min-w-0 flex-1 flex-col">
                   <span className="truncate text-sm font-semibold text-stone-900">
-                    {voucher.heading?.trim() ||
-                      category?.label ||
-                      voucher.category_id ||
-                      "Uncategorized"}
+                    {voucher.heading?.trim() || cat.label}
                   </span>
                   <span className="flex items-center gap-1 truncate text-xs text-stone-500">
                     <span className="truncate">{itemsSummary(voucher)}</span>

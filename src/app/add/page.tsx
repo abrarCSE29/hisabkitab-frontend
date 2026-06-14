@@ -55,6 +55,7 @@ function Composer() {
 
         <VoucherForm
           submitLabel="Save"
+          familyId={workspace.mode === "family" ? workspace.familyId : undefined}
           onSubmit={async (payload) => {
             await api.createVoucher({
               ...payload,

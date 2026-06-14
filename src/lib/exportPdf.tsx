@@ -135,7 +135,7 @@ function Header({ meta }: { meta: ExportMeta }) {
         <View style={s.metaItem}>
           <Text style={s.metaLabel}>Time frame</Text>
           <Text style={s.metaValue}>
-            {meta.start} → {meta.end}
+            {meta.start} - {meta.end}
           </Text>
         </View>
         <View style={s.metaItem}>

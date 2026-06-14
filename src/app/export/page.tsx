@@ -5,7 +5,7 @@ import { Download, FileSpreadsheet, FileText, UserRound, UsersRound } from "luci
 import AppBar, { BackButton } from "@/components/AppBar";
 import AuthGate from "@/components/AuthGate";
 import { api } from "@/lib/api";
-import { categoryHex } from "@/lib/categoryMeta";
+import { resolveCategory } from "@/lib/categoryMeta";
 import { parseIso, taka } from "@/lib/format";
 import {
   csvBlob,
@@ -43,8 +43,7 @@ function buildTemplates(): { id: string; label: string; start: string; end: stri
 
 function buildRows(vouchers: Voucher[], categories: Category[]): ExportRow[] {
   return vouchers.map((v) => {
-    const cat = categories.find((c) => c.id === v.category_id);
-    const category = cat?.label ?? v.category_id ?? "Uncategorized";
+    const cat = resolveCategory(categories, v.category_id);
     const items = v.items
       .filter((i) => i.name.trim())
       .map((i) => i.name)
@@ -54,12 +53,12 @@ function buildRows(vouchers: Voucher[], categories: Category[]): ExportRow[] {
       iso: v.created_at,
       dateLabel: d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }),
       type: v.type,
-      title: v.heading?.trim() || category,
-      category,
+      title: v.heading?.trim() || cat.label,
+      category: cat.label,
       items,
       amount: v.voucher_total,
       by: v.user_name ?? v.user_email ?? null,
-      colorHex: categoryHex(v.category_id),
+      colorHex: cat.hex,
     };
   });
 }
@@ -73,7 +72,7 @@ function ExportView() {
   const templates = useMemo(() => buildTemplates(), []);
   const [start, setStart] = useState(templates[2].start); // default: last month
   const [end, setEnd] = useState(templates[2].end);
-  const [rows, setRows] = useState<ExportRow[]>([]);
+  const [vouchers, setVouchers] = useState<Voucher[]>([]);
   const [fetching, setFetching] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<"csv" | "pdf" | null>(null);
@@ -82,9 +81,13 @@ function ExportView() {
   const workspaceName = workspace.mode === "family" ? workspace.familyName : "Personal";
   const today = fmt(new Date());
 
+  // Rows derive from the fetched vouchers + categories, so they update when the
+  // workspace-scoped categories finish loading (custom labels/colors fill in).
+  const rows = useMemo(() => buildRows(vouchers, categories), [vouchers, categories]);
+
   const load = useCallback(async () => {
     if (start > end) {
-      setRows([]);
+      setVouchers([]);
       setError("Start date is after end date.");
       setFetching(false);
       return;
@@ -92,8 +95,7 @@ function ExportView() {
     setFetching(true);
     setError(null);
     try {
-      const data = await api.exportVouchers({ familyId, start, end });
-      setRows(buildRows(data, useAppStore.getState().categories));
+      setVouchers(await api.exportVouchers({ familyId, start, end }));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load data");
     } finally {
@@ -104,8 +106,9 @@ function ExportView() {
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void load();
-    if (categories.length === 0) api.categories().then(setCategories).catch(() => {});
-  }, [load, categories.length, setCategories]);
+    // Workspace-scoped categories so custom labels/colors resolve in the export.
+    api.categories(undefined, familyId).then(setCategories).catch(() => {});
+  }, [load, familyId, setCategories]);
 
   const totals = useMemo(() => {
     let spent = 0;

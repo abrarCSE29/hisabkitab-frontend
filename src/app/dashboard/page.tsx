@@ -58,7 +58,7 @@ function Dashboard() {
     // Secondary data — feeds the add-form (categories) and workspace switcher
     // (families), not the main list. Load it in the background so a slow/cold
     // call here never holds the feed hostage, and a failure never blanks it.
-    void Promise.all([api.categories(), api.families()])
+    void Promise.all([api.categories(undefined, familyId), api.families()])
       .then(([categories, families]) => {
         setCategories(categories);
         setFamilies(families);

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Trash2 } from "lucide-react";
-import { categoryColor, categoryEmoji } from "@/lib/categoryMeta";
+import { categoryTint, resolveCategory } from "@/lib/categoryMeta";
 import AppBar, { BackButton } from "@/components/AppBar";
 import AuthGate from "@/components/AuthGate";
 import SuccessModal from "@/components/SuccessModal";
@@ -15,7 +15,7 @@ import { useAppStore } from "@/store/useAppStore";
 
 function ReadOnlyVoucher({ voucher }: { voucher: Voucher }) {
   const categories = useAppStore((s) => s.categories);
-  const category = categories.find((c) => c.id === voucher.category_id);
+  const cat = resolveCategory(categories, voucher.category_id);
   const expense = voucher.type === "expense";
 
   return (
@@ -23,18 +23,14 @@ function ReadOnlyVoucher({ voucher }: { voucher: Voucher }) {
       <div className="overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm shadow-stone-900/5">
         <div className="flex items-center gap-3 border-b border-stone-100 p-4">
           <span
-            className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-2xl ${categoryColor(
-              voucher.category_id,
-            )}`}
+            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-2xl"
+            style={categoryTint(cat.hex)}
           >
-            {categoryEmoji(voucher.category_id)}
+            {cat.emoji}
           </span>
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-semibold text-stone-900">
-              {voucher.heading?.trim() ||
-                category?.label ||
-                voucher.category_id ||
-                "Uncategorized"}
+              {voucher.heading?.trim() || cat.label}
             </p>
             <p className="truncate text-xs text-stone-500">
               by {voucher.user_name ?? voucher.user_email ?? "family member"} ·{" "}
@@ -92,12 +88,16 @@ function VoucherDetail() {
   useEffect(() => {
     api
       .voucher(id)
-      .then(setVoucher)
+      .then((v) => {
+        setVoucher(v);
+        // Load categories for the voucher's own workspace so custom (incl.
+        // family) category labels resolve even on a direct deep link.
+        api
+          .categories(undefined, v.family_id ?? undefined)
+          .then(setCategories)
+          .catch(() => {});
+      })
       .catch((err) => setError(err instanceof Error ? err.message : "Failed to load"));
-    // For direct navigation, the category labels may not be cached yet.
-    if (useAppStore.getState().categories.length === 0) {
-      api.categories().then(setCategories).catch(() => {});
-    }
   }, [id, setCategories]);
 
   const isOwner = voucher !== null && voucher.user_id === user?.id;
@@ -149,6 +149,7 @@ function VoucherDetail() {
             <VoucherForm
               initial={voucher}
               submitLabel="Update"
+              familyId={voucher.family_id ?? undefined}
               onSubmit={async (payload) => {
                 await api.updateVoucher(voucher._id, payload);
                 setUpdated(true);

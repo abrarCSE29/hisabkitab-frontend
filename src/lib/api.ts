@@ -4,6 +4,7 @@ import type {
   Category,
   Family,
   OcrResult,
+  CategoryCreatePayload,
   Voucher,
   VoucherCreatePayload,
   VoucherStats,
@@ -55,8 +56,24 @@ async function request<T>(
 export const api = {
   me: (token?: string) => request<AuthenticatedUser>("/auth/me", { token }),
 
-  categories: (type?: VoucherType) =>
-    request<Category[]>(`/categories${type ? `?type=${type}` : ""}`),
+  categories: (type?: VoucherType, familyId?: string) => {
+    const q = new URLSearchParams();
+    if (type) q.set("type", type);
+    if (familyId) q.set("family_id", familyId);
+    const qs = q.toString();
+    return request<Category[]>(`/categories${qs ? `?${qs}` : ""}`);
+  },
+
+  createCategory: (payload: CategoryCreatePayload, familyId?: string) =>
+    request<Category>(`/categories${familyId ? `?family_id=${familyId}` : ""}`, {
+      method: "POST",
+      body: payload,
+    }),
+
+  updateCategory: (id: string, payload: CategoryCreatePayload) =>
+    request<Category>(`/categories/${id}`, { method: "PUT", body: payload }),
+
+  deleteCategory: (id: string) => request<null>(`/categories/${id}`, { method: "DELETE" }),
 
   vouchers: (familyId?: string, limit = 50) =>
     request<Voucher[]>(

@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { CalendarRange, SlidersHorizontal } from "lucide-react";
-import { categoryColor, categoryEmoji } from "@/lib/categoryMeta";
+import { categoryTint } from "@/lib/categoryMeta";
 import type { VoucherSort } from "@/lib/filters";
 import type { VoucherType } from "@/lib/types";
 import { useAppStore } from "@/store/useAppStore";
@@ -152,11 +152,10 @@ export default function FilterSheet() {
                     }`}
                   >
                     <span
-                      className={`flex h-6 w-6 items-center justify-center rounded-full text-sm ${
-                        active ? "bg-white/20" : categoryColor(category.id)
-                      }`}
+                      className="flex h-6 w-6 items-center justify-center rounded-full text-sm"
+                      style={active ? { backgroundColor: "rgba(255,255,255,0.2)" } : categoryTint(category.color)}
                     >
-                      {categoryEmoji(category.id)}
+                      {category.emoji}
                     </span>
                     {category.name_bn}
                   </button>

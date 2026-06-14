@@ -8,6 +8,16 @@ export interface Category {
   name_bn: string;
   type: VoucherType;
   label: string; // e.g. "Bazaar (বাজার)"
+  emoji: string;
+  color: string; // hex
+  custom: boolean;
+}
+
+export interface CategoryCreatePayload {
+  name: string;
+  type: VoucherType;
+  emoji: string;
+  color: string; // "#rrggbb"
 }
 
 export interface VoucherItem {

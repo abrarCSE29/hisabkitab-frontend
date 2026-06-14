@@ -15,7 +15,7 @@ import { ArrowDownRight, ArrowUpRight, TrendingUp, UserRound, UsersRound } from 
 import AppBar, { BackButton } from "@/components/AppBar";
 import AuthGate from "@/components/AuthGate";
 import { api } from "@/lib/api";
-import { categoryEmoji, categoryHex } from "@/lib/categoryMeta";
+import { resolveCategory } from "@/lib/categoryMeta";
 import { taka } from "@/lib/format";
 import type { CategoryTotal, VoucherStats } from "@/lib/types";
 import { useAppStore } from "@/store/useAppStore";
@@ -93,14 +93,12 @@ function StatsView() {
     // workspace (and thus `load`) changes — a one-shot fetch, not a render loop.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void load();
-    if (categories.length === 0) api.categories().then(setCategories).catch(() => {});
-  }, [load, categories.length, setCategories]);
+    // Categories scoped to the active workspace so custom labels/colors resolve.
+    api.categories(undefined, familyId).then(setCategories).catch(() => {});
+  }, [load, familyId, setCategories]);
 
   const categoryLabel = useCallback(
-    (id: string | null) => {
-      if (!id) return "Uncategorized";
-      return categories.find((c) => c.id === id)?.name_bn ?? id;
-    },
+    (id: string | null) => (id ? resolveCategory(categories, id).nameBn : "Uncategorized"),
     [categories],
   );
 
@@ -113,14 +111,14 @@ function StatsView() {
       id: c.category_id,
       label: categoryLabel(c.category_id),
       value: c.total,
-      hex: categoryHex(c.category_id),
+      hex: resolveCategory(categories, c.category_id).hex,
     }));
     const otherTotal = rest.reduce((sum, c) => sum + c.total, 0);
     if (otherTotal > 0) {
       slices.push({ id: "__other", label: "Other", value: otherTotal, hex: OTHER_HEX });
     }
     return slices;
-  }, [stats, categoryLabel]);
+  }, [stats, categories, categoryLabel]);
 
   const isEmpty =
     stats !== null &&
@@ -330,7 +328,7 @@ function StatsView() {
                         {i + 1}
                       </span>
                       <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-stone-100 text-lg">
-                        {categoryEmoji(e.category_id)}
+                        {resolveCategory(categories, e.category_id).emoji}
                       </span>
                       <span className="min-w-0 flex-1 truncate text-sm font-medium text-stone-700">
                         {e.heading?.trim() || categoryLabel(e.category_id)}
