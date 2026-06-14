@@ -6,6 +6,7 @@ import type {
   OcrResult,
   Voucher,
   VoucherCreatePayload,
+  VoucherStats,
   VoucherType,
   VoucherUpdatePayload,
 } from "@/lib/types";
@@ -64,6 +65,9 @@ export const api = {
 
   createVoucher: (payload: VoucherCreatePayload) =>
     request<{ status: string; id: string }>("/vouchers", { method: "POST", body: payload }),
+
+  stats: (familyId?: string) =>
+    request<VoucherStats>(`/vouchers/stats${familyId ? `?family_id=${familyId}` : ""}`),
 
   voucher: (id: string) => request<Voucher>(`/vouchers/${id}`),
 

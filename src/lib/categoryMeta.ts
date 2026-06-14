@@ -35,10 +35,32 @@ const CATEGORY_COLOR: Record<string, string> = {
   other_income: "bg-green-100 text-green-700",
 };
 
+// Solid hex per category for SVG charts (donut), tuned to echo CATEGORY_COLOR.
+const CATEGORY_HEX: Record<string, string> = {
+  bazaar: "#059669",
+  dining: "#ea580c",
+  transport: "#d97706",
+  rent: "#4f46e5",
+  utilities: "#0284c7",
+  health: "#e11d48",
+  education: "#2563eb",
+  shopping: "#db2777",
+  entertainment: "#7c3aed",
+  others: "#78716c",
+  salary: "#0d9488",
+  business: "#0891b2",
+  gift: "#c026d3",
+  other_income: "#16a34a",
+};
+
 export function categoryEmoji(id: string | null | undefined): string {
   return (id && CATEGORY_EMOJI[id]) || "🧾";
 }
 
 export function categoryColor(id: string | null | undefined): string {
   return (id && CATEGORY_COLOR[id]) || "bg-stone-100 text-stone-600";
+}
+
+export function categoryHex(id: string | null | undefined): string {
+  return (id && CATEGORY_HEX[id]) || "#a8a29e";
 }

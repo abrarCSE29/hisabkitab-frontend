@@ -113,7 +113,7 @@ export default function WorkspaceSwitcher({ highlighted = false }: WorkspaceSwit
             <span className="flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full bg-teal-100">
               <Plus className="h-3.5 w-3.5" strokeWidth={2.75} />
             </span>
-            Create new family
+            Create / Join new family
           </button>
         </div>
       )}

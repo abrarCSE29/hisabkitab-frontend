@@ -69,3 +69,60 @@ export type VoucherUpdatePayload = Omit<VoucherCreatePayload, "family_id">;
 export interface OcrResult {
   items: VoucherItem[];
 }
+
+export interface MonthTotals {
+  spent: number;
+  earned: number;
+  net: number;
+}
+
+export interface TrendPoint {
+  month: string; // "2026-06"
+  label: string; // "Jun"
+  income: number;
+  expense: number;
+}
+
+export interface CategoryTotal {
+  category_id: string | null;
+  total: number;
+}
+
+export interface TopExpense {
+  id: string;
+  heading: string | null;
+  category_id: string | null;
+  total: number;
+  created_at: string;
+}
+
+export interface WeekdayTotal {
+  weekday: number; // Mon=0 .. Sun=6
+  label: string;
+  total: number;
+}
+
+export interface DayTotal {
+  day: number;
+  total: number;
+}
+
+export interface MemberTotal {
+  user_id: string;
+  user_name: string | null;
+  total: number;
+}
+
+export interface VoucherStats {
+  month_label: string;
+  days_in_month: number;
+  today: number;
+  month: MonthTotals;
+  prev_month: MonthTotals;
+  trend: TrendPoint[];
+  by_category: CategoryTotal[];
+  top_expenses: TopExpense[];
+  by_weekday: WeekdayTotal[];
+  by_day: DayTotal[];
+  by_member: MemberTotal[];
+}
